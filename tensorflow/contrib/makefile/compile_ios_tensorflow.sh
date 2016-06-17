@@ -20,8 +20,8 @@ GENDIR=tensorflow/contrib/makefile/gen/
 LIBDIR=${GENDIR}lib
 LIB_PREFIX=libtensorflow-core
 
-make -f tensorflow/contrib/makefile/Makefile cleantarget
-make -f tensorflow/contrib/makefile/Makefile \
+make -j8 -f tensorflow/contrib/makefile/Makefile cleantarget
+make -j8 -f tensorflow/contrib/makefile/Makefile \
 TARGET=IOS IOS_ARCH=ARMV7 LIB_NAME=${LIB_PREFIX}-armv7.a OPTFLAGS="$1" $2 $3
 if [ $? -ne 0 ]
 then
@@ -29,8 +29,8 @@ then
   exit 1
 fi
 
-make -f tensorflow/contrib/makefile/Makefile cleantarget
-make -f tensorflow/contrib/makefile/Makefile \
+make -j8 -f tensorflow/contrib/makefile/Makefile cleantarget
+make -j8 -f tensorflow/contrib/makefile/Makefile \
 TARGET=IOS IOS_ARCH=ARMV7S LIB_NAME=${LIB_PREFIX}-armv7s.a OPTFLAGS="$1" $2 $3
 if [ $? -ne 0 ]
 then
@@ -38,8 +38,8 @@ then
   exit 1
 fi
 
-make -f tensorflow/contrib/makefile/Makefile cleantarget
-make -f tensorflow/contrib/makefile/Makefile \
+make -j8 -f tensorflow/contrib/makefile/Makefile cleantarget
+make -j8 -f tensorflow/contrib/makefile/Makefile \
 TARGET=IOS IOS_ARCH=ARM64 LIB_NAME=${LIB_PREFIX}-arm64.a OPTFLAGS="$1" $2 $3
 if [ $? -ne 0 ]
 then
@@ -47,8 +47,8 @@ then
   exit 1
 fi
 
-make -f tensorflow/contrib/makefile/Makefile cleantarget
-make -f tensorflow/contrib/makefile/Makefile \
+make -j8 -f tensorflow/contrib/makefile/Makefile cleantarget
+make -j8 -f tensorflow/contrib/makefile/Makefile \
 TARGET=IOS IOS_ARCH=I386 LIB_NAME=${LIB_PREFIX}-i386.a OPTFLAGS="$1" $2 $3
 if [ $? -ne 0 ]
 then
@@ -56,8 +56,8 @@ then
   exit 1
 fi
 
-make -f tensorflow/contrib/makefile/Makefile cleantarget
-make -f tensorflow/contrib/makefile/Makefile \
+make -j8 -f tensorflow/contrib/makefile/Makefile cleantarget
+make -j8 -f tensorflow/contrib/makefile/Makefile \
 TARGET=IOS IOS_ARCH=X86_64 LIB_NAME=${LIB_PREFIX}-x86_64.a OPTFLAGS="$1" $2 $3
 if [ $? -ne 0 ]
 then
