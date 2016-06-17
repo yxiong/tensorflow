@@ -33,6 +33,7 @@ tensorflow/core/kernels/reduction_ops_min.cc
 tensorflow/core/kernels/reduction_ops_mean.cc
 tensorflow/core/kernels/reduction_ops_max.cc
 tensorflow/core/kernels/reduction_ops_common.cc
+tensorflow/core/kernels/random_op.cc
 tensorflow/core/kernels/pooling_ops_common.cc
 tensorflow/core/kernels/pad_op.cc
 tensorflow/core/kernels/pack_op.cc
