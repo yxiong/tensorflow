@@ -36,6 +36,7 @@
   AVCaptureSession *session;
   std::unique_ptr<tensorflow::Session> tf_session;
   std::vector<std::string> labels;
+  CFTimeInterval timingStart;
 }
 @property(retain, nonatomic) CATextLayer *predictionTextLayer;
 

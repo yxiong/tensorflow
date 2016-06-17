@@ -234,6 +234,9 @@ static const NSString *AVCaptureStillImageIsCapturingStillImageContext =
 - (void)captureOutput:(AVCaptureOutput *)captureOutput
 didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer
        fromConnection:(AVCaptureConnection *)connection {
+    printf("Last frame took %f seconds\n", CACurrentMediaTime() - timingStart);
+    timingStart = CACurrentMediaTime();
+
   CVPixelBufferRef pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer);
   [self runCNNOnFrame:pixelBuffer];
 }
