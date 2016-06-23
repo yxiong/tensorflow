@@ -30,7 +30,7 @@ IPHONESIMULATOR_SYSROOT=`xcrun --sdk iphonesimulator --show-sdk-path`
 IOS_SDK_VERSION=`xcrun --sdk iphoneos --show-sdk-version`
 MIN_SDK_VERSION=9.2
 
-CFLAGS="-DNDEBUG -g -O0 -pipe -fPIC -fcxx-exceptions"
+CFLAGS="-DNDEBUG -g -Os -pipe -fPIC -fcxx-exceptions"
 CXXFLAGS="${CFLAGS} -std=c++11 -stdlib=libc++"
 LDFLAGS="-stdlib=libc++"
 LIBS="-lc++ -lc++abi"
@@ -69,7 +69,7 @@ ${LDFLAGS} \
 -L${IPHONESIMULATOR_SYSROOT}/usr/lib/ \
 -L${IPHONESIMULATOR_SYSROOT}/usr/lib/system" \
 "LIBS=${LIBS}"
-make
+make -j8
 make install
 
 make distclean
@@ -97,7 +97,7 @@ ${LDFLAGS} \
 -L${IPHONESIMULATOR_SYSROOT}/usr/lib/ \
 -L${IPHONESIMULATOR_SYSROOT}/usr/lib/system" \
 "LIBS=${LIBS}"
-make
+make -j8
 make install
 
 make distclean
@@ -121,7 +121,7 @@ LDFLAGS="-arch armv7 \
 -miphoneos-version-min=${MIN_SDK_VERSION} \
 ${LDFLAGS}" \
 "LIBS=${LIBS}"
-make
+make -j8
 make install
 
 make distclean
@@ -145,7 +145,7 @@ LDFLAGS="-arch armv7s \
 -miphoneos-version-min=${MIN_SDK_VERSION} \
 ${LDFLAGS}" \
 "LIBS=${LIBS}"
-make
+make -j8
 make install
 
 make distclean
@@ -168,7 +168,7 @@ LDFLAGS="-arch arm64 \
 -miphoneos-version-min=${MIN_SDK_VERSION} \
 ${LDFLAGS}" \
 "LIBS=${LIBS}"
-make
+make -j8
 make install
 
 lipo \
