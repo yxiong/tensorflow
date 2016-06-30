@@ -419,6 +419,10 @@ The default value of 1e-8 for epsilon might not be a good default in
 general. For example, when training an Inception network on ImageNet a
 current good choice is 1.0 or 0.1.
 
+Note that in dense implement of this algorithm, m_t, v_t and variable will
+update even if g is zero, but in sparse implement, m_t, v_t and variable
+will not update in iterations g is zero.
+
 ##### Args:
 
 
@@ -485,6 +489,10 @@ See the [paper]
 #### `tf.train.RMSPropOptimizer.__init__(learning_rate, decay=0.9, momentum=0.0, epsilon=1e-10, use_locking=False, name='RMSProp')` {#RMSPropOptimizer.__init__}
 
 Construct a new RMSProp optimizer.
+
+Note that in dense implement of this algorithm, m_t and v_t will
+update even if g is zero, but in sparse implement, m_t and v_t
+will not update in iterations g is zero.
 
 ##### Args:
 
@@ -1570,7 +1578,7 @@ communicate with any other server in the same cluster.
 
 - - -
 
-#### `tf.train.Server.__init__(server_or_cluster_def, job_name=None, task_index=None, protocol=None, start=True)` {#Server.__init__}
+#### `tf.train.Server.__init__(server_or_cluster_def, job_name=None, task_index=None, protocol=None, config=None, start=True)` {#Server.__init__}
 
 Creates a new server with the given definition.
 
@@ -1593,6 +1601,8 @@ override any information provided in `server_or_cluster_def`.
 *  <b>`protocol`</b>: (Optional.) Specifies the protocol to be used by the server.
     Acceptable values include `"grpc"`. Defaults to the value in
     `server_or_cluster_def`, if specified. Otherwise defaults to `"grpc"`.
+*  <b>`config`</b>: (Options.) A `tf.ConfigProto` that specifies default
+    configuration options for all sessions that run on this server.
 *  <b>`start`</b>: (Optional.) Boolean, indicating whether to start the server
     after creating it. Defaults to `True`.
 
@@ -1604,7 +1614,7 @@ override any information provided in `server_or_cluster_def`.
 
 - - -
 
-#### `tf.train.Server.create_local_server(start=True)` {#Server.create_local_server}
+#### `tf.train.Server.create_local_server(config=None, start=True)` {#Server.create_local_server}
 
 Creates a new single-process cluster running on the local host.
 
@@ -1616,6 +1626,8 @@ single-process cluster containing a single task in a job called
 ##### Args:
 
 
+*  <b>`config`</b>: (Options.) A `tf.ConfigProto` that specifies default
+    configuration options for all sessions that run on this server.
 *  <b>`start`</b>: (Optional.) Boolean, indicating whether to start the server after
     creating it. Defaults to `True`.
 
@@ -1643,6 +1655,18 @@ with tf.Session(server.target):
 ##### Returns:
 
   A string containing a session target for this server.
+
+
+- - -
+
+#### `tf.train.Server.server_def` {#Server.server_def}
+
+Returns the `tf.train.ServerDef` for this server.
+
+##### Returns:
+
+  A `tf.train.ServerDef` prototocol buffer that describes the configuration
+  of this server.
 
 
 
@@ -3272,6 +3296,20 @@ Call this method when you do not need the summary writer anymore.
 
 
 
+#### Other Methods
+- - -
+
+#### `tf.train.SummaryWriter.reopen()` {#SummaryWriter.reopen}
+
+Reopens the summary writer.
+
+Can be called after `close()` to add more events in the same directory.
+The events will go into a new events file.
+
+Does nothing if the summary writer was not closed.
+
+
+
 - - -
 
 ### `tf.train.summary_iterator(path)` {#summary_iterator}
@@ -3593,6 +3631,13 @@ Called when the thread starts.
 #### `tf.train.LooperThread.stop_loop()` {#LooperThread.stop_loop}
 
 Called when the thread stops.
+
+
+
+- - -
+
+### `tf.train.do_quantize_training_on_graphdef(input_graph, num_bits)` {#do_quantize_training_on_graphdef}
+
 
 
 

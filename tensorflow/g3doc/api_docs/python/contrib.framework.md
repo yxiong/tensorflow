@@ -184,6 +184,24 @@ See also:  `is_non_decreasing`
 
 - - -
 
+### `tf.contrib.framework.is_tensor(x)` {#is_tensor}
+
+Check for tensor types.
+Check whether an object is a tensor. Equivalent to
+`isinstance(x, [tf.Tensor, tf.SparseTensor, tf.Variable])`.
+
+##### Args:
+
+
+*  <b>`x`</b>: An python object to check.
+
+##### Returns:
+
+  `True` if `x` is a tensor, `False` if not.
+
+
+- - -
+
 ### `tf.contrib.framework.reduce_sum_n(tensors, name=None)` {#reduce_sum_n}
 
 Reduce tensors to a scalar sum.
@@ -221,12 +239,18 @@ Invalid IDs (< 0) are pruned from input IDs and weights, as well as any IDs
 with non-positive weight. For an entry with no features, the embedding vector
 for `default_id` is returned, or the 0-vector if `default_id` is not supplied.
 
+The ids and weights may be multi-dimensional. Embeddings are always aggregated
+along the last dimension.
+
 ##### Args:
 
 
 *  <b>`embedding_weights`</b>: A list of `P` float tensors or values representing
-      partitioned embedding tensors.
-*  <b>`sparse_ids`</b>: `SparseTensor` of shape `[batch_size, ?]` containing the ids.
+      partitioned embedding tensors.  The total unpartitioned shape should be
+      `[e_0, e_1, ..., e_m]`, where `e_0` represents the vocab size and
+      `e_1, ..., e_m` are the embedding dimensions.
+*  <b>`sparse_ids`</b>: `SparseTensor` of shape `[d_0, d_1, ..., d_n]` containing the
+      ids. `d_0` is typically batch size.
 *  <b>`sparse_weights`</b>: `SparseTensor` of same shape as `sparse_ids`, containing
       float weights corresponding to `sparse_ids`, or `None` if all weights
       are be assumed to be 1.0.
@@ -241,7 +265,7 @@ for `default_id` is returned, or the 0-vector if `default_id` is not supplied.
 
 ##### Returns:
 
-  Dense tensor of shape `[batch_size, embed_dim]`.
+  Dense tensor of shape `[d_0, d_1, ..., d_{n-1}, e_1, ..., e_m]`.
 
 ##### Raises:
 
@@ -292,6 +316,45 @@ Assert tensors are the same shape, from the same graph.
 
   Tuple of (actual_tensor, label_tensor), possibly with assert ops added.
 
+
+
+## Deprecation
+- - -
+
+### `tf.contrib.framework.deprecated(date, instructions)` {#deprecated}
+
+Decorator for marking functions or methods deprecated.
+
+This decorator adds a deprecation warning to a function's docstring. It has
+the following format:
+
+  <function> (from <module>) is deprecated and will be removed after <date>.
+  Instructions for updating:
+  <instructions>
+
+whenever the decorated function is called. <function> will include the class
+name if it is a method.
+
+It also edits the docstring of the function: ' (deprecated)' is appended
+to the first line of the docstring and a deprecation notice is prepended
+to the rest of the docstring.
+
+##### Args:
+
+
+*  <b>`date`</b>: String. The date the function is scheduled to be removed. Must be
+    ISO 8601 (YYYY-MM-DD).
+*  <b>`instructions`</b>: String. Instructions on how to update code using the
+    deprecated function.
+
+##### Returns:
+
+  Decorated function or method.
+
+##### Raises:
+
+
+*  <b>`ValueError`</b>: If date is not in ISO 8601 format, or instructions are empty.
 
 
 
