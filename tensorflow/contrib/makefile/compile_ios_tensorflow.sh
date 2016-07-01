@@ -17,7 +17,7 @@
 # packs them into a fat file.
 
 ACTUAL_XCODE_VERSION=`xcodebuild -version | head -n 1 | sed 's/Xcode //'`
-REQUIRED_XCODE_VERSION=7.3.0
+REQUIRED_XCODE_VERSION=7.3
 if [ ${ACTUAL_XCODE_VERSION//.} -lt ${REQUIRED_XCODE_VERSION//.} ]
 then
     echo "error: Xcode ${REQUIRED_XCODE_VERSION} or later is required."
