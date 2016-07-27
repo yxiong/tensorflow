@@ -4,7 +4,7 @@
 # Created: Jun 23, 2016.
 
 import tensorflow as tf
-from tensorflow.python.client import graph_util
+from tensorflow.python.framework import graph_util
 
 
 """Some utilities for manipulating protobuf model files."""
