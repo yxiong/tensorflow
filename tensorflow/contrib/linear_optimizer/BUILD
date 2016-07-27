@@ -47,6 +47,7 @@ py_library(
     srcs = [
         "__init__.py",
         "python/ops/sdca_ops.py",
+        "python/sdca_optimizer.py",
     ],
     data = [":python/ops/_sdca_ops.so"],
     srcs_version = "PY2AND3",
@@ -61,6 +62,7 @@ py_test(
     size = "small",
     srcs = ["python/kernel_tests/sdca_ops_test.py"],
     srcs_version = "PY2AND3",
+    tags = ["notap"],
     deps = [
         ":sdca_ops_py",
         "//tensorflow:tensorflow_py",

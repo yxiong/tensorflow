@@ -14,8 +14,14 @@ limitations under the License.
 ==============================================================================*/
 
 #include "tensorflow/core/framework/op.h"
+#include "tensorflow/core/framework/op_def_builder.h"
+#include "tensorflow/core/framework/shape_inference.h"
 
 namespace tensorflow {
+
+using shape_inference::Dimension;
+using shape_inference::InferenceContext;
+using shape_inference::Shape;
 
 // --------------------------------------------------------------------------
 
@@ -569,6 +575,7 @@ REGISTER_OP("TensorArrayPack")
     .Input("flow_in: float")
     .Output("value: dtype")
     .Attr("dtype: type")
+    .Attr("element_shape: shape = { unknown_rank: true }")
     .Doc(R"doc(
 Pack the elements from the TensorArray into output `value`.
 
@@ -576,6 +583,9 @@ All elements must have the same shape.
 
 handle: The handle to a TensorArray.
 dtype: The type of the elem that is returned.
+element_shape: The expected shape of an element, if known. Used to
+  validate the shapes of TensorArray elements. If this shape is not
+  fully specified, packing zero-size TensorArrays is an error.
 flow_in: A float scalar that enforces proper chaining of operations.
 value: All of the elements in the TensorArray, concatenated along a new
   axis (the new dimension 0).
@@ -602,6 +612,7 @@ REGISTER_OP("TensorArrayConcat")
     .Output("value: dtype")
     .Output("lengths: int64")
     .Attr("dtype: type")
+    .Attr("element_shape_except0: shape = { unknown_rank: true }")
     .Doc(R"doc(
 Concat the elements from the TensorArray into value `value`.
 
@@ -620,6 +631,10 @@ All elements must have the same shape (excepting the first dimension).
 handle: The handle to a TensorArray.
 dtype: The type of the elem that is returned.
 flow_in: A float scalar that enforces proper chaining of operations.
+element_shape_except0: The expected shape of an element, if known,
+  excluding the first dimension. Used to validate the shapes of
+  TensorArray elements. If this shape is not fully specified, concatenating
+  zero-size TensorArrays is an error.
 value: All of the elements in the TensorArray, concatenated along the first
   axis.
 lengths: A vector of the row sizes of the original T elements in the
@@ -828,6 +843,13 @@ REGISTER_OP("LookupTableFind")
     .Output("values: Tout")
     .Attr("Tin: type")
     .Attr("Tout: type")
+    .SetShapeFn([](InferenceContext* c) {
+      const Shape* unused;
+      TF_RETURN_IF_ERROR(c->WithRank(c->input(0), 0, &unused));
+      TF_RETURN_IF_ERROR(c->WithRank(c->input(2), 0, &unused));
+      c->set_output(0, c->UnknownShape());
+      return Status::OK();
+    })
     .Doc(R"doc(
 Looks up keys in a table, outputs the corresponding values.
 
@@ -849,6 +871,12 @@ REGISTER_OP("LookupTableInsert")
     .Input("values: Tout")
     .Attr("Tin: type")
     .Attr("Tout: type")
+    .SetShapeFn([](InferenceContext* c) {
+      const Shape* unused;
+      TF_RETURN_IF_ERROR(c->WithRank(c->input(0), 0, &unused));
+      TF_RETURN_IF_ERROR(c->Merge(c->input(1), c->input(2), &unused));
+      return Status::OK();
+    })
     .Doc(R"doc(
 Updates the table to associates keys with values.
 
@@ -863,6 +891,12 @@ values: Same shape as `keys`.  Values to associate with keys.
 REGISTER_OP("LookupTableSize")
     .Input("table_handle: Ref(string)")
     .Output("size: int64")
+    .SetShapeFn([](InferenceContext* c) {
+      const Shape* unused;
+      TF_RETURN_IF_ERROR(c->WithRank(c->input(0), 0, &unused));
+      c->set_output(0, c->Scalar());
+      return Status::OK();
+    })
     .Doc(R"doc(
 Computes the number of elements in the given table.
 
@@ -876,6 +910,17 @@ REGISTER_OP("LookupTableExport")
     .Output("values: Tvalues")
     .Attr("Tkeys: type")
     .Attr("Tvalues: type")
+    .SetShapeFn([](InferenceContext* c) {
+      const Shape* unused;
+      TF_RETURN_IF_ERROR(c->WithRank(c->input(0), 0, &unused));
+
+      const Shape* values = c->UnknownShape();
+      TF_RETURN_IF_ERROR(c->WithRankAtLeast(values, 1, &values));
+      const Shape* keys = c->Vector(c->Dim(values, 0));
+      c->set_output(0, keys);
+      c->set_output(1, values);
+      return Status::OK();
+    })
     .Doc(R"doc(
 Outputs all keys and values in the table.
 
@@ -960,6 +1005,14 @@ REGISTER_OP("InitializeTable")
     .Input("values: Tval")
     .Attr("Tkey: type")
     .Attr("Tval: type")
+    .SetShapeFn([](InferenceContext* c) {
+      const Shape* unused;
+      TF_RETURN_IF_ERROR(c->WithRank(c->input(0), 0, &unused));
+      const Shape* keys;
+      TF_RETURN_IF_ERROR(c->WithRank(c->input(1), 1, &keys));
+      TF_RETURN_IF_ERROR(c->Merge(keys, c->input(2), &keys));
+      return Status::OK();
+    })
     .Doc(R"doc(
 Table initializer that takes two tensors for keys and values respectively.
 
@@ -975,6 +1028,12 @@ REGISTER_OP("InitializeTableFromTextFile")
     .Attr("value_index: int >= -2")
     .Attr("vocab_size: int >= -1 = -1")
     .Attr("delimiter: string = '\t'")
+    .SetShapeFn([](InferenceContext* c) {
+      const Shape* unused;
+      TF_RETURN_IF_ERROR(c->WithRank(c->input(0), 0, &unused));
+      TF_RETURN_IF_ERROR(c->WithRank(c->input(1), 0, &unused));
+      return Status::OK();
+    })
     .Doc(R"doc(
 Initializes a table from a text file.
 

@@ -1,4 +1,3 @@
-# pylint: disable=g-bad-file-header
 # Copyright 2016 The TensorFlow Authors. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -212,7 +211,7 @@ class TensorFlowDataFrame(df.DataFrame):
                      column_names, num_epochs, num_threads, enqueue_size,
                      batch_size, queue_capacity, min_after_dequeue, shuffle,
                      seed):
-    """Create a `DataFrame` from `tensorflow.Example`s.
+    """Create a `DataFrame` from CSV files.
 
     If `has_header` is false, then `column_names` must be specified. If
     `has_header` is true and `column_names` are specified, then `column_names`
@@ -238,7 +237,7 @@ class TensorFlowDataFrame(df.DataFrame):
 
     Returns:
       A `DataFrame` that has columns corresponding to `features` and is filled
-      with `Example`s from `filepatterns`.
+      with examples from `filepatterns`.
 
     Raises:
       ValueError: no files match `filepatterns`.
@@ -296,7 +295,7 @@ class TensorFlowDataFrame(df.DataFrame):
                min_after_dequeue=None,
                shuffle=True,
                seed=None):
-    """Create a `DataFrame` from `tensorflow.Example`s.
+    """Create a `DataFrame` from CSV files.
 
     If `has_header` is false, then `column_names` must be specified. If
     `has_header` is true and `column_names` are specified, then `column_names`
@@ -321,7 +320,7 @@ class TensorFlowDataFrame(df.DataFrame):
 
     Returns:
       A `DataFrame` that has columns corresponding to `features` and is filled
-      with `Example`s from `filepatterns`.
+      with examples from `filepatterns`.
 
     Raises:
       ValueError: no files match `filepatterns`.
@@ -351,7 +350,7 @@ class TensorFlowDataFrame(df.DataFrame):
                                  min_after_dequeue=None,
                                  shuffle=True,
                                  seed=None):
-    """Create a `DataFrame` from `tensorflow.Example`s.
+    """Create a `DataFrame` from CSV files, given a feature_spec.
 
     If `has_header` is false, then `column_names` must be specified. If
     `has_header` is true and `column_names` are specified, then `column_names`
@@ -377,7 +376,7 @@ class TensorFlowDataFrame(df.DataFrame):
 
     Returns:
       A `DataFrame` that has columns corresponding to `features` and is filled
-      with `Example`s from `filepatterns`.
+      with examples from `filepatterns`.
 
     Raises:
       ValueError: no files match `filepatterns`.

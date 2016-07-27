@@ -159,7 +159,7 @@ Status OpKernelConstruction::allocate_temp(DataType type,
   attr.allocation_will_be_logged = true;
   Tensor new_temp(allocator_, type, shape, attr);
 
-  if (!new_temp.IsInitialized() && shape.num_elements() > 0) {
+  if (!new_temp.IsInitialized()) {
     return errors::ResourceExhausted(
         "OOM when allocating temporary tensor with shape", shape.DebugString());
   }
@@ -194,6 +194,7 @@ Status OpKernelConstruction::allocate_persistent(
 OpKernelContext::OpKernelContext(Params* params)
     : OpKernelContext(
           params, static_cast<int>(params->op_kernel->output_types().size())) {}
+
 OpKernelContext::OpKernelContext(Params* params, int noutputs)
     : params_(params), outputs_(noutputs) {
   Allocator* eigen_gpu_allocator = get_allocator(AllocatorAttributes());
@@ -201,8 +202,7 @@ OpKernelContext::OpKernelContext(Params* params, int noutputs)
   params_->device->ReinitializeGpuDevice(this, params_->eigen_gpu_device,
                                          params_->op_device_context,
                                          eigen_gpu_allocator);
-  record_tensor_accesses_ = params_->device->RequiresRecordingAccessedTensors();
-  if (record_tensor_accesses_) {
+  if (params_->record_tensor_accesses) {
     referenced_tensors_.Init();
   }
 }
@@ -213,7 +213,7 @@ OpKernelContext::~OpKernelContext() {
       delete value.tensor;
     }
   }
-  if (record_tensor_accesses_) referenced_tensors_.Destroy();
+  if (params_->record_tensor_accesses) referenced_tensors_.Destroy();
 }
 
 Allocator* OpKernelContext::get_allocator(AllocatorAttributes attr) {
@@ -447,7 +447,7 @@ Status OpKernelContext::allocate_tensor(
   logged_attr.allocation_will_be_logged = true;
   Tensor new_tensor(a, type, shape, logged_attr);
 
-  if (!new_tensor.IsInitialized() && shape.num_elements() > 0) {
+  if (!new_tensor.IsInitialized()) {
     return errors::ResourceExhausted("OOM when allocating tensor with shape",
                                      shape.DebugString());
   }

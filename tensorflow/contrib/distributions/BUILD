@@ -33,6 +33,17 @@ cuda_py_tests(
 )
 
 cuda_py_tests(
+    name = "operator_pd_diag_test",
+    size = "small",
+    srcs = ["python/kernel_tests/operator_pd_diag_test.py"],
+    additional_deps = [
+        ":distributions_py",
+        "//tensorflow/python:framework_test_lib",
+        "//tensorflow/python:platform_test",
+    ],
+)
+
+cuda_py_tests(
     name = "operator_pd_full_test",
     size = "small",
     srcs = ["python/kernel_tests/operator_pd_full_test.py"],
@@ -50,9 +61,74 @@ py_library(
 )
 
 cuda_py_tests(
+    name = "bernoulli_test",
+    size = "small",
+    srcs = ["python/kernel_tests/bernoulli_test.py"],
+    additional_deps = [
+        ":distributions_py",
+        "//tensorflow/python:platform_test",
+    ],
+)
+
+cuda_py_tests(
+    name = "beta_test",
+    size = "small",
+    srcs = ["python/kernel_tests/beta_test.py"],
+    additional_deps = [
+        ":distributions_py",
+        "//tensorflow/python:framework_test_lib",
+        "//tensorflow/python:platform_test",
+    ],
+    tags = ["notsan"],
+)
+
+cuda_py_tests(
+    name = "categorical_test",
+    size = "small",
+    srcs = ["python/kernel_tests/categorical_test.py"],
+    additional_deps = [
+        ":distributions_py",
+        "//tensorflow/python:framework_test_lib",
+        "//tensorflow/python:platform_test",
+    ],
+)
+
+cuda_py_tests(
+    name = "chi2_test",
+    srcs = ["python/kernel_tests/chi2_test.py"],
+    additional_deps = [
+        "//tensorflow/python:framework_test_lib",
+        "//tensorflow/python:platform_test",
+    ],
+)
+
+cuda_py_tests(
+    name = "dirichlet_test",
+    size = "small",
+    srcs = ["python/kernel_tests/dirichlet_test.py"],
+    additional_deps = [
+        ":distributions_py",
+        "//tensorflow/python:framework_test_lib",
+        "//tensorflow/python:platform_test",
+    ],
+    tags = ["notsan"],
+)
+
+cuda_py_tests(
     name = "dirichlet_multinomial_test",
     size = "small",
     srcs = ["python/kernel_tests/dirichlet_multinomial_test.py"],
+    additional_deps = [
+        ":distributions_py",
+        "//tensorflow/python:framework_test_lib",
+        "//tensorflow/python:platform_test",
+    ],
+    tags = ["notsan"],
+)
+
+cuda_py_tests(
+    name = "exponential_test",
+    srcs = ["python/kernel_tests/exponential_test.py"],
     additional_deps = [
         ":distributions_py",
         "//tensorflow/python:framework_test_lib",
@@ -70,27 +146,8 @@ cuda_py_tests(
 )
 
 cuda_py_tests(
-    name = "chi2_test",
-    srcs = ["python/kernel_tests/chi2_test.py"],
-    additional_deps = [
-        "//tensorflow/python:framework_test_lib",
-        "//tensorflow/python:platform_test",
-    ],
-)
-
-cuda_py_tests(
-    name = "exponential_test",
-    srcs = ["python/kernel_tests/exponential_test.py"],
-    additional_deps = [
-        "//tensorflow/python:framework_test_lib",
-        "//tensorflow/python:platform_test",
-    ],
-)
-
-cuda_py_tests(
-    name = "normal_test",
-    size = "small",
-    srcs = ["python/kernel_tests/normal_test.py"],
+    name = "inverse_gamma_test",
+    srcs = ["python/kernel_tests/inverse_gamma_test.py"],
     additional_deps = [
         ":distributions_py",
         "//tensorflow/python:framework_test_lib",
@@ -110,42 +167,11 @@ cuda_py_tests(
 )
 
 cuda_py_tests(
-    name = "student_t_test",
-    size = "small",
-    srcs = ["python/kernel_tests/student_t_test.py"],
+    name = "laplace_test",
+    srcs = ["python/kernel_tests/laplace_test.py"],
     additional_deps = [
         ":distributions_py",
         "//tensorflow/python:framework_test_lib",
-        "//tensorflow/python:platform_test",
-    ],
-)
-
-cuda_py_tests(
-    name = "uniform_test",
-    size = "small",
-    srcs = ["python/kernel_tests/uniform_test.py"],
-    additional_deps = [
-        ":distributions_py",
-        "//tensorflow/python:platform_test",
-    ],
-)
-
-cuda_py_tests(
-    name = "categorical_test",
-    size = "small",
-    srcs = ["python/kernel_tests/categorical_test.py"],
-    additional_deps = [
-        ":distributions_py",
-        "//tensorflow/python:platform_test",
-    ],
-)
-
-cuda_py_tests(
-    name = "bernoulli_test",
-    size = "small",
-    srcs = ["python/kernel_tests/bernoulli_test.py"],
-    additional_deps = [
-        ":distributions_py",
         "//tensorflow/python:platform_test",
     ],
 )
@@ -162,9 +188,52 @@ cuda_py_tests(
 )
 
 cuda_py_tests(
+    name = "normal_test",
+    size = "small",
+    srcs = ["python/kernel_tests/normal_test.py"],
+    additional_deps = [
+        ":distributions_py",
+        "//tensorflow/python:framework_test_lib",
+        "//tensorflow/python:platform_test",
+    ],
+)
+
+cuda_py_tests(
+    name = "student_t_test",
+    size = "small",
+    srcs = ["python/kernel_tests/student_t_test.py"],
+    additional_deps = [
+        ":distributions_py",
+        "//tensorflow/python:framework_test_lib",
+        "//tensorflow/python:platform_test",
+    ],
+    tags = ["notsan"],
+)
+
+cuda_py_tests(
+    name = "uniform_test",
+    size = "small",
+    srcs = ["python/kernel_tests/uniform_test.py"],
+    additional_deps = [
+        ":distributions_py",
+        "//tensorflow/python:platform_test",
+    ],
+)
+
+cuda_py_tests(
     name = "normal_conjugate_posteriors_test",
     size = "small",
     srcs = ["python/kernel_tests/normal_conjugate_posteriors_test.py"],
+    additional_deps = [
+        ":distributions_py",
+        "//tensorflow/python:platform_test",
+    ],
+)
+
+cuda_py_tests(
+    name = "transformed_distribution_test",
+    size = "small",
+    srcs = ["python/kernel_tests/transformed_distribution_test.py"],
     additional_deps = [
         ":distributions_py",
         "//tensorflow/python:platform_test",

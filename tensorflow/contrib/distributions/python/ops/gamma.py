@@ -33,7 +33,7 @@ from tensorflow.python.ops import math_ops
 from tensorflow.python.ops import random_ops
 
 
-class Gamma(distribution.ContinuousDistribution):
+class Gamma(distribution.Distribution):
   """The `Gamma` distribution with parameter alpha and beta.
 
   The parameters are the shape and inverse scale parameters alpha, beta.
@@ -57,8 +57,12 @@ class Gamma(distribution.ContinuousDistribution):
 
   """
 
-  def __init__(
-      self, alpha, beta, strict=True, strict_statistics=True, name="Gamma"):
+  def __init__(self,
+               alpha,
+               beta,
+               validate_args=True,
+               allow_nan_stats=False,
+               name="Gamma"):
     """Construct Gamma distributions with parameters `alpha` and `beta`.
 
     The parameters `alpha` and `beta` must be shaped in a way that supports
@@ -71,25 +75,24 @@ class Gamma(distribution.ContinuousDistribution):
       beta: `float` or `double` tensor, the inverse scale params of the
         distribution(s).
         beta must contain only positive values.
-      strict: Whether to assert that `a > 0, b > 0`, and that `x > 0` in the
-        methods `pdf(x)` and `log_pdf(x)`.  If `strict` is False
+      validate_args: Whether to assert that `a > 0, b > 0`, and that `x > 0` in
+        the methods `prob(x)` and `log_prob(x)`.  If `validate_args` is False
         and the inputs are invalid, correct behavior is not guaranteed.
-      strict_statistics:  Boolean, default True.  If True, raise an exception if
+      allow_nan_stats:  Boolean, default False.  If False, raise an exception if
         a statistic (e.g. mean/mode/etc...) is undefined for any batch member.
-        If False, batch members with valid parameters leading to undefined
+        If True, batch members with valid parameters leading to undefined
         statistics will return NaN for this statistic.
       name: The name to prepend to all ops created by this distribution.
 
     Raises:
       TypeError: if `alpha` and `beta` are different dtypes.
     """
-    self._strict_statistics = strict_statistics
-    self._strict = strict
+    self._allow_nan_stats = allow_nan_stats
+    self._validate_args = validate_args
     with ops.op_scope([alpha, beta], name) as scope:
       self._name = scope
-      with ops.control_dependencies(
-          [check_ops.assert_positive(alpha), check_ops.assert_positive(beta)]
-          if strict else []):
+      with ops.control_dependencies([check_ops.assert_positive(
+          alpha), check_ops.assert_positive(beta)] if validate_args else []):
         alpha = array_ops.identity(alpha, name="alpha")
         beta = array_ops.identity(beta, name="beta")
 
@@ -103,14 +106,14 @@ class Gamma(distribution.ContinuousDistribution):
     self._beta = beta
 
   @property
-  def strict_statistics(self):
+  def allow_nan_stats(self):
     """Boolean describing behavior when a stat is undefined for batch member."""
-    return self._strict_statistics
+    return self._allow_nan_stats
 
   @property
-  def strict(self):
+  def validate_args(self):
     """Boolean describing behavior on invalid input."""
-    return self._strict
+    return self._validate_args
 
   @property
   def name(self):
@@ -191,7 +194,7 @@ class Gamma(distribution.ContinuousDistribution):
     """Mode of each batch member.
 
     The mode of a gamma distribution is `(alpha - 1) / beta` when `alpha > 1`,
-    and `NaN` otherwise.  If `self.strict_statistics` is `True`, an exception
+    and `NaN` otherwise.  If `self.allow_nan_stats` is `False`, an exception
     will be raised rather than returning `NaN`.
 
     Args:
@@ -205,14 +208,14 @@ class Gamma(distribution.ContinuousDistribution):
     with ops.name_scope(self.name):
       with ops.op_scope([alpha, beta], name):
         mode_if_defined = (alpha - 1.0) / beta
-        if self.strict_statistics:
-          one = ops.convert_to_tensor(1.0, dtype=self.dtype)
-          return control_flow_ops.with_dependencies(
-              [check_ops.assert_less(one, alpha)], mode_if_defined)
-        else:
+        if self.allow_nan_stats:
           alpha_ge_1 = alpha >= 1.0
           nan = np.nan * self._ones()
           return math_ops.select(alpha_ge_1, mode_if_defined, nan)
+        else:
+          one = ops.convert_to_tensor(1.0, dtype=self.dtype)
+          return control_flow_ops.with_dependencies(
+              [check_ops.assert_less(one, alpha)], mode_if_defined)
 
   def variance(self, name="variance"):
     """Variance of each batch member."""
@@ -226,15 +229,15 @@ class Gamma(distribution.ContinuousDistribution):
       with ops.op_scope([self._alpha, self._beta], name):
         return math_ops.sqrt(self._alpha) / self._beta
 
-  def log_pdf(self, x, name="log_pdf"):
-    """Log pdf of observations in `x` under these Gamma distribution(s).
+  def log_prob(self, x, name="log_prob"):
+    """Log prob of observations in `x` under these Gamma distribution(s).
 
     Args:
       x: tensor of dtype `dtype`, must be broadcastable with `alpha` and `beta`.
       name: The name to give this op.
 
     Returns:
-      log_pdf: tensor of dtype `dtype`, the log-PDFs of `x`.
+      log_prob: tensor of dtype `dtype`, the log-PDFs of `x`.
 
     Raises:
       TypeError: if `x` and `alpha` are different dtypes.
@@ -244,16 +247,15 @@ class Gamma(distribution.ContinuousDistribution):
         alpha = self._alpha
         beta = self._beta
         x = ops.convert_to_tensor(x)
-        x = control_flow_ops.with_dependencies(
-            [check_ops.assert_positive(x)] if self.strict else [],
-            x)
+        x = control_flow_ops.with_dependencies([check_ops.assert_positive(x)] if
+                                               self.validate_args else [], x)
         contrib_tensor_util.assert_same_float_dtype(tensors=[x,],
                                                     dtype=self.dtype)
 
         return (alpha * math_ops.log(beta) + (alpha - 1) * math_ops.log(x) -
                 beta * x - math_ops.lgamma(self._alpha))
 
-  def pdf(self, x, name="pdf"):
+  def prob(self, x, name="prob"):
     """Pdf of observations in `x` under these Gamma distribution(s).
 
     Args:
@@ -261,14 +263,12 @@ class Gamma(distribution.ContinuousDistribution):
       name: The name to give this op.
 
     Returns:
-      pdf: tensor of dtype `dtype`, the PDFs of `x`
+      prob: tensor of dtype `dtype`, the PDFs of `x`
 
     Raises:
       TypeError: if `x` and `alpha` are different dtypes.
     """
-    with ops.name_scope(self.name):
-      with ops.op_scope([], name):
-        return math_ops.exp(self.log_pdf(x))
+    return super(Gamma, self).prob(x, name)
 
   def log_cdf(self, x, name="log_cdf"):
     """Log CDF of observations `x` under these Gamma distribution(s).
@@ -283,9 +283,8 @@ class Gamma(distribution.ContinuousDistribution):
     with ops.name_scope(self.name):
       with ops.op_scope([self._alpha, self._beta, x], name):
         x = ops.convert_to_tensor(x)
-        x = control_flow_ops.with_dependencies(
-            [check_ops.assert_positive(x)] if self.strict else [],
-            x)
+        x = control_flow_ops.with_dependencies([check_ops.assert_positive(x)] if
+                                               self.validate_args else [], x)
         contrib_tensor_util.assert_same_float_dtype(tensors=[x,],
                                                     dtype=self.dtype)
         # Note that igamma returns the regularized incomplete gamma function,
@@ -331,7 +330,7 @@ class Gamma(distribution.ContinuousDistribution):
         return (alpha - math_ops.log(beta) + math_ops.lgamma(alpha) +
                 (1 - alpha) * math_ops.digamma(alpha))
 
-  def sample(self, n, seed=None, name="sample"):
+  def sample_n(self, n, seed=None, name="sample_n"):
     """Draws `n` samples from the Gamma distribution(s).
 
     See the doc for tf.random_gamma for further detail.
@@ -360,3 +359,7 @@ class Gamma(distribution.ContinuousDistribution):
 
   def _ones(self):
     return array_ops.ones_like(self._alpha + self._beta, dtype=self.dtype)
+
+  @property
+  def is_continuous(self):
+    return True

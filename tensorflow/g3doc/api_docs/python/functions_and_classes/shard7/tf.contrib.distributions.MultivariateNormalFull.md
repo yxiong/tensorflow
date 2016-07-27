@@ -41,7 +41,7 @@ dist.pdf(x)
 ```
 - - -
 
-#### `tf.contrib.distributions.MultivariateNormalFull.__init__(mu, sigma, strict=True, strict_statistics=True, name='MultivariateNormalFull')` {#MultivariateNormalFull.__init__}
+#### `tf.contrib.distributions.MultivariateNormalFull.__init__(mu, sigma, validate_args=True, allow_nan_stats=False, name='MultivariateNormalFull')` {#MultivariateNormalFull.__init__}
 
 Multivariate Normal distributions on `R^k`.
 
@@ -54,11 +54,12 @@ User must provide means `mu` and `sigma`, the mean and covariance.
     `b >= 0`.
 *  <b>`sigma`</b>: `(N+2)-D` `Tensor` with same `dtype` as `mu` and shape
     `[N1,...,Nb, k, k]`.
-*  <b>`strict`</b>: Whether to validate input with asserts.  If `strict` is `False`,
-    and the inputs are invalid, correct behavior is not guaranteed.
-*  <b>`strict_statistics`</b>: Boolean, default True.  If True, raise an exception if
+*  <b>`validate_args`</b>: Whether to validate input with asserts.  If `validate_args`
+    is `False`, and the inputs are invalid, correct behavior is not
+    guaranteed.
+*  <b>`allow_nan_stats`</b>: Boolean, default False.  If False, raise an exception if
     a statistic (e.g. mean/mode/etc...) is undefined for any batch member.
-    If False, batch members with valid parameters leading to undefined
+    If True, batch members with valid parameters leading to undefined
     statistics will return NaN for this statistic.
 *  <b>`name`</b>: The name to give Ops created by the initializer.
 
@@ -66,6 +67,13 @@ User must provide means `mu` and `sigma`, the mean and covariance.
 
 
 *  <b>`TypeError`</b>: If `mu` and `sigma` are different dtypes.
+
+
+- - -
+
+#### `tf.contrib.distributions.MultivariateNormalFull.allow_nan_stats` {#MultivariateNormalFull.allow_nan_stats}
+
+Boolean describing behavior when a stat is undefined for batch member.
 
 
 - - -
@@ -129,6 +137,13 @@ Shape of a sample from a single distribution as a 1-D int32 `Tensor`.
 
 - - -
 
+#### `tf.contrib.distributions.MultivariateNormalFull.is_continuous` {#MultivariateNormalFull.is_continuous}
+
+
+
+
+- - -
+
 #### `tf.contrib.distributions.MultivariateNormalFull.is_reparameterized` {#MultivariateNormalFull.is_reparameterized}
 
 
@@ -143,27 +158,43 @@ Log CDF.
 
 - - -
 
-#### `tf.contrib.distributions.MultivariateNormalFull.log_likelihood(value, name='log_likelihood')` {#MultivariateNormalFull.log_likelihood}
+#### `tf.contrib.distributions.MultivariateNormalFull.log_pdf(value, name='log_pdf')` {#MultivariateNormalFull.log_pdf}
 
-Log likelihood of this distribution (same as log_pdf).
+Log of the probability density function.
 
 
 - - -
 
-#### `tf.contrib.distributions.MultivariateNormalFull.log_pdf(x, name='log_pdf')` {#MultivariateNormalFull.log_pdf}
+#### `tf.contrib.distributions.MultivariateNormalFull.log_pmf(value, name='log_pmf')` {#MultivariateNormalFull.log_pmf}
 
-Log pdf of observations `x` given these Multivariate Normals.
+Log of the probability mass function.
+
+
+- - -
+
+#### `tf.contrib.distributions.MultivariateNormalFull.log_prob(x, name='log_prob')` {#MultivariateNormalFull.log_prob}
+
+Log prob of observations `x` given these Multivariate Normals.
+
+`x` is a batch vector with compatible shape if `x` is a `Tensor` whose
+shape can be broadcast up to either:
+
+````
+self.batch_shape + self.event_shape
+OR
+[M1,...,Mm] + self.batch_shape + self.event_shape
+```
 
 ##### Args:
 
 
-*  <b>`x`</b>: tensor of dtype `dtype`, must be broadcastable with `mu`.
+*  <b>`x`</b>: Compatible batch vector with same `dtype` as this distribution.
 *  <b>`name`</b>: The name to give this op.
 
 ##### Returns:
 
 
-*  <b>`log_pdf`</b>: tensor of dtype `dtype`, the log-PDFs of `x`.
+*  <b>`log_prob`</b>: tensor of dtype `dtype`, the log-PDFs of `x`.
 
 
 - - -
@@ -203,25 +234,72 @@ Mode of each batch member.
 
 - - -
 
-#### `tf.contrib.distributions.MultivariateNormalFull.pdf(x, name='pdf')` {#MultivariateNormalFull.pdf}
+#### `tf.contrib.distributions.MultivariateNormalFull.pdf(value, name='pdf')` {#MultivariateNormalFull.pdf}
+
+The probability density function.
+
+
+- - -
+
+#### `tf.contrib.distributions.MultivariateNormalFull.pmf(value, name='pmf')` {#MultivariateNormalFull.pmf}
+
+The probability mass function.
+
+
+- - -
+
+#### `tf.contrib.distributions.MultivariateNormalFull.prob(x, name='prob')` {#MultivariateNormalFull.prob}
 
 The PDF of observations `x` under these Multivariate Normals.
+
+`x` is a batch vector with compatible shape if `x` is a `Tensor` whose
+shape can be broadcast up to either:
+
+````
+self.batch_shape + self.event_shape
+OR
+[M1,...,Mm] + self.batch_shape + self.event_shape
+```
 
 ##### Args:
 
 
-*  <b>`x`</b>: tensor of dtype `dtype`, must be broadcastable with `mu` and `sigma`.
+*  <b>`x`</b>: Compatible batch vector with same `dtype` as this distribution.
 *  <b>`name`</b>: The name to give this op.
 
 ##### Returns:
 
 
-*  <b>`pdf`</b>: tensor of dtype `dtype`, the pdf values of `x`.
+*  <b>`prob`</b>: tensor of dtype `dtype`, the prob values of `x`.
 
 
 - - -
 
-#### `tf.contrib.distributions.MultivariateNormalFull.sample(n, seed=None, name='sample')` {#MultivariateNormalFull.sample}
+#### `tf.contrib.distributions.MultivariateNormalFull.sample(sample_shape=(), seed=None, name='sample')` {#MultivariateNormalFull.sample}
+
+Generate samples of the specified shape for each batched distribution.
+
+Note that a call to `sample()` without arguments will generate a single
+sample per batched distribution.
+
+##### Args:
+
+
+*  <b>`sample_shape`</b>: `int32` `Tensor` or tuple or list. Shape of the generated
+    samples.
+*  <b>`seed`</b>: Python integer seed for RNG
+*  <b>`name`</b>: name to give to the op.
+
+##### Returns:
+
+
+*  <b>`samples`</b>: a `Tensor` of dtype `self.dtype` and shape
+      `sample_shape + self.batch_shape + self.event_shape`.
+
+
+- - -
+
+#### `tf.contrib.distributions.MultivariateNormalFull.sample_n(n, seed=None, name='sample_n')` {#MultivariateNormalFull.sample_n}
 
 Sample `n` observations from the Multivariate Normal Distributions.
 
@@ -262,16 +340,9 @@ Standard deviation of the distribution.
 
 - - -
 
-#### `tf.contrib.distributions.MultivariateNormalFull.strict` {#MultivariateNormalFull.strict}
+#### `tf.contrib.distributions.MultivariateNormalFull.validate_args` {#MultivariateNormalFull.validate_args}
 
 Boolean describing behavior on invalid input.
-
-
-- - -
-
-#### `tf.contrib.distributions.MultivariateNormalFull.strict_statistics` {#MultivariateNormalFull.strict_statistics}
-
-Boolean describing behavior when a stat is undefined for batch member.
 
 
 - - -

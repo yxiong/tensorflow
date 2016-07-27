@@ -55,8 +55,13 @@ for which this evaluation was performed.
 ##### Args:
 
 
-*  <b>`x`</b>: features.
-*  <b>`y`</b>: targets.
+*  <b>`x`</b>: Matrix of shape [n_samples, n_features...]. Can be iterator that
+     returns arrays of features. The training input samples for fitting the
+     model. If set, `input_fn` must be `None`.
+*  <b>`y`</b>: Vector or matrix [n_samples] or [n_samples, n_outputs]. Can be
+     iterator that returns array of targets. The training target values
+     (class labels in classification, real numbers in regression). If set,
+     `input_fn` must be `None`.
 *  <b>`input_fn`</b>: Input function. If set, `x`, `y`, and `batch_size` must be
     `None`.
 *  <b>`feed_fn`</b>: Function creating a feed dict every time it is called. Called
@@ -102,10 +107,10 @@ Trains a model given training data `x` predictions and `y` targets.
 ##### Args:
 
 
-*  <b>`x`</b>: matrix or tensor of shape [n_samples, n_features...]. Can be
-     iterator that returns arrays of features. The training input
-     samples for fitting the model. If set, `input_fn` must be `None`.
-*  <b>`y`</b>: vector or matrix [n_samples] or [n_samples, n_outputs]. Can be
+*  <b>`x`</b>: Matrix of shape [n_samples, n_features...]. Can be iterator that
+     returns arrays of features. The training input samples for fitting the
+     model. If set, `input_fn` must be `None`.
+*  <b>`y`</b>: Vector or matrix [n_samples] or [n_samples, n_outputs]. Can be
      iterator that returns array of targets. The training target values
      (class labels in classification, real numbers in regression). If set,
      `input_fn` must be `None`.
@@ -207,12 +212,12 @@ to converge, and you want to split up training into subparts.
 ##### Args:
 
 
-*  <b>`x`</b>: matrix or tensor of shape [n_samples, n_features...]. Can be
-    iterator that returns arrays of features. The training input
-    samples for fitting the model. If set, `input_fn` must be `None`.
-*  <b>`y`</b>: vector or matrix [n_samples] or [n_samples, n_outputs]. Can be
-    iterator that returns array of targets. The training target values
-    (class label in classification, real numbers in regression). If set,
+*  <b>`x`</b>: Matrix of shape [n_samples, n_features...]. Can be iterator that
+     returns arrays of features. The training input samples for fitting the
+     model. If set, `input_fn` must be `None`.
+*  <b>`y`</b>: Vector or matrix [n_samples] or [n_samples, n_outputs]. Can be
+     iterator that returns array of targets. The training target values
+     (class labels in classification, real numbers in regression). If set,
      `input_fn` must be `None`.
 *  <b>`input_fn`</b>: Input function. If set, `x`, `y`, and `batch_size` must be
     `None`.
@@ -235,22 +240,32 @@ to converge, and you want to split up training into subparts.
 
 - - -
 
-#### `tf.contrib.learn.BaseEstimator.predict(x=None, input_fn=None, batch_size=None, outputs=None)` {#BaseEstimator.predict}
+#### `tf.contrib.learn.BaseEstimator.predict(x=None, input_fn=None, batch_size=None, outputs=None, as_iterable=False)` {#BaseEstimator.predict}
 
 Returns predictions for given features.
 
 ##### Args:
 
 
-*  <b>`x`</b>: Features. If set, `input_fn` must be `None`.
-*  <b>`input_fn`</b>: Input function. If set, `x` must be `None`.
-*  <b>`batch_size`</b>: Override default batch size.
+*  <b>`x`</b>: Matrix of shape [n_samples, n_features...]. Can be iterator that
+     returns arrays of features. The training input samples for fitting the
+     model. If set, `input_fn` must be `None`.
+*  <b>`input_fn`</b>: Input function. If set, `x` and 'batch_size' must be `None`.
+*  <b>`batch_size`</b>: Override default batch size. If set, 'input_fn' must be
+    'None'.
 *  <b>`outputs`</b>: list of `str`, name of the output to predict.
-           If `None`, returns all.
+    If `None`, returns all.
+*  <b>`as_iterable`</b>: If True, return an iterable which keeps yielding predictions
+    for each example until inputs are exhausted. Note: The inputs must
+    terminate if you want the iterable to terminate (e.g. be sure to pass
+    num_epochs=1 if you are using something like read_batch_features).
 
 ##### Returns:
 
-  Numpy array of predicted classes or regression values.
+  A numpy array of predicted classes or regression values if the
+  constructor's `model_fn` returns a `Tensor` for `predictions` or a `dict`
+  of numpy arrays if `model_fn` returns a `dict`. Returns an iterable of
+  predictions if as_iterable is True.
 
 ##### Raises:
 
@@ -311,10 +326,13 @@ Constructs an Estimator instance.
 
       * `features` are single `Tensor` or `dict` of `Tensor`s
              (depending on data passed to `fit`),
-      * `targets` are `Tensor` or
-             `dict` of `Tensor`s (for multi-head model).
+      * `targets` are `Tensor` or `dict` of `Tensor`s (for multi-head
+             models). If mode is `ModeKeys.INFER`, `targets=None` will be
+             passed. If the `model_fn`'s signature does not accept
+             `mode`, the `model_fn` must still be able to handle
+             `targets=None`.
       * `mode` represents if this training, evaluation or
-             prediction. See `ModeKeys` for example keys.
+             prediction. See `ModeKeys`.
       * `params` is a `dict` of hyperparameters. Will receive what
              is passed to Estimator in `params` parameter. This allows
              to configure Estimators from hyper parameter tunning.
@@ -351,8 +369,13 @@ for which this evaluation was performed.
 ##### Args:
 
 
-*  <b>`x`</b>: features.
-*  <b>`y`</b>: targets.
+*  <b>`x`</b>: Matrix of shape [n_samples, n_features...]. Can be iterator that
+     returns arrays of features. The training input samples for fitting the
+     model. If set, `input_fn` must be `None`.
+*  <b>`y`</b>: Vector or matrix [n_samples] or [n_samples, n_outputs]. Can be
+     iterator that returns array of targets. The training target values
+     (class labels in classification, real numbers in regression). If set,
+     `input_fn` must be `None`.
 *  <b>`input_fn`</b>: Input function. If set, `x`, `y`, and `batch_size` must be
     `None`.
 *  <b>`feed_fn`</b>: Function creating a feed dict every time it is called. Called
@@ -398,10 +421,10 @@ Trains a model given training data `x` predictions and `y` targets.
 ##### Args:
 
 
-*  <b>`x`</b>: matrix or tensor of shape [n_samples, n_features...]. Can be
-     iterator that returns arrays of features. The training input
-     samples for fitting the model. If set, `input_fn` must be `None`.
-*  <b>`y`</b>: vector or matrix [n_samples] or [n_samples, n_outputs]. Can be
+*  <b>`x`</b>: Matrix of shape [n_samples, n_features...]. Can be iterator that
+     returns arrays of features. The training input samples for fitting the
+     model. If set, `input_fn` must be `None`.
+*  <b>`y`</b>: Vector or matrix [n_samples] or [n_samples, n_outputs]. Can be
      iterator that returns array of targets. The training target values
      (class labels in classification, real numbers in regression). If set,
      `input_fn` must be `None`.
@@ -503,12 +526,12 @@ to converge, and you want to split up training into subparts.
 ##### Args:
 
 
-*  <b>`x`</b>: matrix or tensor of shape [n_samples, n_features...]. Can be
-    iterator that returns arrays of features. The training input
-    samples for fitting the model. If set, `input_fn` must be `None`.
-*  <b>`y`</b>: vector or matrix [n_samples] or [n_samples, n_outputs]. Can be
-    iterator that returns array of targets. The training target values
-    (class label in classification, real numbers in regression). If set,
+*  <b>`x`</b>: Matrix of shape [n_samples, n_features...]. Can be iterator that
+     returns arrays of features. The training input samples for fitting the
+     model. If set, `input_fn` must be `None`.
+*  <b>`y`</b>: Vector or matrix [n_samples] or [n_samples, n_outputs]. Can be
+     iterator that returns array of targets. The training target values
+     (class labels in classification, real numbers in regression). If set,
      `input_fn` must be `None`.
 *  <b>`input_fn`</b>: Input function. If set, `x`, `y`, and `batch_size` must be
     `None`.
@@ -531,22 +554,32 @@ to converge, and you want to split up training into subparts.
 
 - - -
 
-#### `tf.contrib.learn.Estimator.predict(x=None, input_fn=None, batch_size=None, outputs=None)` {#Estimator.predict}
+#### `tf.contrib.learn.Estimator.predict(x=None, input_fn=None, batch_size=None, outputs=None, as_iterable=False)` {#Estimator.predict}
 
 Returns predictions for given features.
 
 ##### Args:
 
 
-*  <b>`x`</b>: Features. If set, `input_fn` must be `None`.
-*  <b>`input_fn`</b>: Input function. If set, `x` must be `None`.
-*  <b>`batch_size`</b>: Override default batch size.
+*  <b>`x`</b>: Matrix of shape [n_samples, n_features...]. Can be iterator that
+     returns arrays of features. The training input samples for fitting the
+     model. If set, `input_fn` must be `None`.
+*  <b>`input_fn`</b>: Input function. If set, `x` and 'batch_size' must be `None`.
+*  <b>`batch_size`</b>: Override default batch size. If set, 'input_fn' must be
+    'None'.
 *  <b>`outputs`</b>: list of `str`, name of the output to predict.
-           If `None`, returns all.
+    If `None`, returns all.
+*  <b>`as_iterable`</b>: If True, return an iterable which keeps yielding predictions
+    for each example until inputs are exhausted. Note: The inputs must
+    terminate if you want the iterable to terminate (e.g. be sure to pass
+    num_epochs=1 if you are using something like read_batch_features).
 
 ##### Returns:
 
-  Numpy array of predicted classes or regression values.
+  A numpy array of predicted classes or regression values if the
+  constructor's `model_fn` returns a `Tensor` for `predictions` or a `dict`
+  of numpy arrays if `model_fn` returns a `dict`. Returns an iterable of
+  predictions if as_iterable is True.
 
 ##### Raises:
 
@@ -646,8 +679,13 @@ for which this evaluation was performed.
 ##### Args:
 
 
-*  <b>`x`</b>: features.
-*  <b>`y`</b>: targets.
+*  <b>`x`</b>: Matrix of shape [n_samples, n_features...]. Can be iterator that
+     returns arrays of features. The training input samples for fitting the
+     model. If set, `input_fn` must be `None`.
+*  <b>`y`</b>: Vector or matrix [n_samples] or [n_samples, n_outputs]. Can be
+     iterator that returns array of targets. The training target values
+     (class labels in classification, real numbers in regression). If set,
+     `input_fn` must be `None`.
 *  <b>`input_fn`</b>: Input function. If set, `x`, `y`, and `batch_size` must be
     `None`.
 *  <b>`feed_fn`</b>: Function creating a feed dict every time it is called. Called
@@ -776,12 +814,12 @@ to converge, and you want to split up training into subparts.
 ##### Args:
 
 
-*  <b>`x`</b>: matrix or tensor of shape [n_samples, n_features...]. Can be
-    iterator that returns arrays of features. The training input
-    samples for fitting the model. If set, `input_fn` must be `None`.
-*  <b>`y`</b>: vector or matrix [n_samples] or [n_samples, n_outputs]. Can be
-    iterator that returns array of targets. The training target values
-    (class label in classification, real numbers in regression). If set,
+*  <b>`x`</b>: Matrix of shape [n_samples, n_features...]. Can be iterator that
+     returns arrays of features. The training input samples for fitting the
+     model. If set, `input_fn` must be `None`.
+*  <b>`y`</b>: Vector or matrix [n_samples] or [n_samples, n_outputs]. Can be
+     iterator that returns array of targets. The training target values
+     (class labels in classification, real numbers in regression). If set,
      `input_fn` must be `None`.
 *  <b>`input_fn`</b>: Input function. If set, `x`, `y`, and `batch_size` must be
     `None`.
@@ -914,9 +952,12 @@ Input of `fit` and `evaluate` should have following features,
 * for each `column` in `feature_columns`:
   - if `column` is a `SparseColumn`, a feature with `key=column.name`
     whose `value` is a `SparseTensor`.
+  - if `column` is a `WeightedSparseColumn`, two features: the first with
+    `key` the id column name, the second with `key` the weight column name.
+    Both features' `value` must be a `SparseTensor`.
   - if `column` is a `RealValuedColumn`, a feature with `key=column.name`
     whose `value` is a `Tensor`.
-  - if `feature_columns` is `None`, then `input` must contains only real
+  - if `feature_columns` is `None`, then `input` must contain only real
     valued `Tensor`.
 - - -
 
@@ -999,8 +1040,13 @@ for which this evaluation was performed.
 ##### Args:
 
 
-*  <b>`x`</b>: features.
-*  <b>`y`</b>: targets.
+*  <b>`x`</b>: Matrix of shape [n_samples, n_features...]. Can be iterator that
+     returns arrays of features. The training input samples for fitting the
+     model. If set, `input_fn` must be `None`.
+*  <b>`y`</b>: Vector or matrix [n_samples] or [n_samples, n_outputs]. Can be
+     iterator that returns array of targets. The training target values
+     (class labels in classification, real numbers in regression). If set,
+     `input_fn` must be `None`.
 *  <b>`input_fn`</b>: Input function. If set, `x`, `y`, and `batch_size` must be
     `None`.
 *  <b>`feed_fn`</b>: Function creating a feed dict every time it is called. Called
@@ -1046,10 +1092,10 @@ Trains a model given training data `x` predictions and `y` targets.
 ##### Args:
 
 
-*  <b>`x`</b>: matrix or tensor of shape [n_samples, n_features...]. Can be
-     iterator that returns arrays of features. The training input
-     samples for fitting the model. If set, `input_fn` must be `None`.
-*  <b>`y`</b>: vector or matrix [n_samples] or [n_samples, n_outputs]. Can be
+*  <b>`x`</b>: Matrix of shape [n_samples, n_features...]. Can be iterator that
+     returns arrays of features. The training input samples for fitting the
+     model. If set, `input_fn` must be `None`.
+*  <b>`y`</b>: Vector or matrix [n_samples] or [n_samples, n_outputs]. Can be
      iterator that returns array of targets. The training target values
      (class labels in classification, real numbers in regression). If set,
      `input_fn` must be `None`.
@@ -1165,12 +1211,12 @@ to converge, and you want to split up training into subparts.
 ##### Args:
 
 
-*  <b>`x`</b>: matrix or tensor of shape [n_samples, n_features...]. Can be
-    iterator that returns arrays of features. The training input
-    samples for fitting the model. If set, `input_fn` must be `None`.
-*  <b>`y`</b>: vector or matrix [n_samples] or [n_samples, n_outputs]. Can be
-    iterator that returns array of targets. The training target values
-    (class label in classification, real numbers in regression). If set,
+*  <b>`x`</b>: Matrix of shape [n_samples, n_features...]. Can be iterator that
+     returns arrays of features. The training input samples for fitting the
+     model. If set, `input_fn` must be `None`.
+*  <b>`y`</b>: Vector or matrix [n_samples] or [n_samples, n_outputs]. Can be
+     iterator that returns array of targets. The training target values
+     (class labels in classification, real numbers in regression). If set,
      `input_fn` must be `None`.
 *  <b>`input_fn`</b>: Input function. If set, `x`, `y`, and `batch_size` must be
     `None`.
@@ -1193,9 +1239,9 @@ to converge, and you want to split up training into subparts.
 
 - - -
 
-#### `tf.contrib.learn.DNNClassifier.predict(x=None, input_fn=None, batch_size=None)` {#DNNClassifier.predict}
+#### `tf.contrib.learn.DNNClassifier.predict(x=None, input_fn=None, batch_size=None, as_iterable=False)` {#DNNClassifier.predict}
 
-Returns predictions for given features.
+Returns predicted classes for given features.
 
 ##### Args:
 
@@ -1203,15 +1249,20 @@ Returns predictions for given features.
 *  <b>`x`</b>: features.
 *  <b>`input_fn`</b>: Input function. If set, x must be None.
 *  <b>`batch_size`</b>: Override default batch size.
+*  <b>`as_iterable`</b>: If True, return an iterable which keeps yielding predictions
+    for each example until inputs are exhausted. Note: The inputs must
+    terminate if you want the iterable to terminate (e.g. be sure to pass
+    num_epochs=1 if you are using something like read_batch_features).
 
 ##### Returns:
 
-  Numpy array of predicted classes or regression values.
+  Numpy array of predicted classes (or an iterable of predicted classes if
+  as_iterable is True).
 
 
 - - -
 
-#### `tf.contrib.learn.DNNClassifier.predict_proba(x=None, input_fn=None, batch_size=None)` {#DNNClassifier.predict_proba}
+#### `tf.contrib.learn.DNNClassifier.predict_proba(x=None, input_fn=None, batch_size=None, as_iterable=False)` {#DNNClassifier.predict_proba}
 
 Returns prediction probabilities for given features.
 
@@ -1221,10 +1272,15 @@ Returns prediction probabilities for given features.
 *  <b>`x`</b>: features.
 *  <b>`input_fn`</b>: Input function. If set, x and y must be None.
 *  <b>`batch_size`</b>: Override default batch size.
+*  <b>`as_iterable`</b>: If True, return an iterable which keeps yielding predictions
+    for each example until inputs are exhausted. Note: The inputs must
+    terminate if you want the iterable to terminate (e.g. be sure to pass
+    num_epochs=1 if you are using something like read_batch_features).
 
 ##### Returns:
 
-  Numpy array of predicted probabilities.
+  Numpy array of predicted probabilities (or an iterable of predicted
+  probabilities if as_iterable is True).
 
 
 - - -
@@ -1313,9 +1369,12 @@ Input of `fit` and `evaluate` should have following features,
 * for each `column` in `feature_columns`:
   - if `column` is a `SparseColumn`, a feature with `key=column.name`
     whose `value` is a `SparseTensor`.
+  - if `column` is a `WeightedSparseColumn`, two features: the first with
+    `key` the id column name, the second with `key` the weight column name.
+    Both features' `value` must be a `SparseTensor`.
   - if `column` is a `RealValuedColumn`, a feature with `key=column.name`
     whose `value` is a `Tensor`.
-  - if `feature_columns` is `None`, then `input` must contains only real
+  - if `feature_columns` is `None`, then `input` must contain only real
     valued `Tensor`.
 - - -
 
@@ -1396,8 +1455,13 @@ for which this evaluation was performed.
 ##### Args:
 
 
-*  <b>`x`</b>: features.
-*  <b>`y`</b>: targets.
+*  <b>`x`</b>: Matrix of shape [n_samples, n_features...]. Can be iterator that
+     returns arrays of features. The training input samples for fitting the
+     model. If set, `input_fn` must be `None`.
+*  <b>`y`</b>: Vector or matrix [n_samples] or [n_samples, n_outputs]. Can be
+     iterator that returns array of targets. The training target values
+     (class labels in classification, real numbers in regression). If set,
+     `input_fn` must be `None`.
 *  <b>`input_fn`</b>: Input function. If set, `x`, `y`, and `batch_size` must be
     `None`.
 *  <b>`feed_fn`</b>: Function creating a feed dict every time it is called. Called
@@ -1443,10 +1507,10 @@ Trains a model given training data `x` predictions and `y` targets.
 ##### Args:
 
 
-*  <b>`x`</b>: matrix or tensor of shape [n_samples, n_features...]. Can be
-     iterator that returns arrays of features. The training input
-     samples for fitting the model. If set, `input_fn` must be `None`.
-*  <b>`y`</b>: vector or matrix [n_samples] or [n_samples, n_outputs]. Can be
+*  <b>`x`</b>: Matrix of shape [n_samples, n_features...]. Can be iterator that
+     returns arrays of features. The training input samples for fitting the
+     model. If set, `input_fn` must be `None`.
+*  <b>`y`</b>: Vector or matrix [n_samples] or [n_samples, n_outputs]. Can be
      iterator that returns array of targets. The training target values
      (class labels in classification, real numbers in regression). If set,
      `input_fn` must be `None`.
@@ -1562,12 +1626,12 @@ to converge, and you want to split up training into subparts.
 ##### Args:
 
 
-*  <b>`x`</b>: matrix or tensor of shape [n_samples, n_features...]. Can be
-    iterator that returns arrays of features. The training input
-    samples for fitting the model. If set, `input_fn` must be `None`.
-*  <b>`y`</b>: vector or matrix [n_samples] or [n_samples, n_outputs]. Can be
-    iterator that returns array of targets. The training target values
-    (class label in classification, real numbers in regression). If set,
+*  <b>`x`</b>: Matrix of shape [n_samples, n_features...]. Can be iterator that
+     returns arrays of features. The training input samples for fitting the
+     model. If set, `input_fn` must be `None`.
+*  <b>`y`</b>: Vector or matrix [n_samples] or [n_samples, n_outputs]. Can be
+     iterator that returns array of targets. The training target values
+     (class labels in classification, real numbers in regression). If set,
      `input_fn` must be `None`.
 *  <b>`input_fn`</b>: Input function. If set, `x`, `y`, and `batch_size` must be
     `None`.
@@ -1590,20 +1654,37 @@ to converge, and you want to split up training into subparts.
 
 - - -
 
-#### `tf.contrib.learn.DNNRegressor.predict(x=None, input_fn=None, batch_size=None)` {#DNNRegressor.predict}
+#### `tf.contrib.learn.DNNRegressor.predict(x=None, input_fn=None, batch_size=None, outputs=None, as_iterable=False)` {#DNNRegressor.predict}
 
 Returns predictions for given features.
 
 ##### Args:
 
 
-*  <b>`x`</b>: features.
-*  <b>`input_fn`</b>: Input function. If set, x must be None.
-*  <b>`batch_size`</b>: Override default batch size.
+*  <b>`x`</b>: Matrix of shape [n_samples, n_features...]. Can be iterator that
+     returns arrays of features. The training input samples for fitting the
+     model. If set, `input_fn` must be `None`.
+*  <b>`input_fn`</b>: Input function. If set, `x` and 'batch_size' must be `None`.
+*  <b>`batch_size`</b>: Override default batch size. If set, 'input_fn' must be
+    'None'.
+*  <b>`outputs`</b>: list of `str`, name of the output to predict.
+    If `None`, returns all.
+*  <b>`as_iterable`</b>: If True, return an iterable which keeps yielding predictions
+    for each example until inputs are exhausted. Note: The inputs must
+    terminate if you want the iterable to terminate (e.g. be sure to pass
+    num_epochs=1 if you are using something like read_batch_features).
 
 ##### Returns:
 
-  Numpy array of predicted classes or regression values.
+  A numpy array of predicted classes or regression values if the
+  constructor's `model_fn` returns a `Tensor` for `predictions` or a `dict`
+  of numpy arrays if `model_fn` returns a `dict`. Returns an iterable of
+  predictions if as_iterable is True.
+
+##### Raises:
+
+
+*  <b>`ValueError`</b>: If x and input_fn are both provided or both `None`.
 
 
 - - -
@@ -1693,8 +1774,13 @@ for which this evaluation was performed.
 ##### Args:
 
 
-*  <b>`x`</b>: features.
-*  <b>`y`</b>: targets.
+*  <b>`x`</b>: Matrix of shape [n_samples, n_features...]. Can be iterator that
+     returns arrays of features. The training input samples for fitting the
+     model. If set, `input_fn` must be `None`.
+*  <b>`y`</b>: Vector or matrix [n_samples] or [n_samples, n_outputs]. Can be
+     iterator that returns array of targets. The training target values
+     (class labels in classification, real numbers in regression). If set,
+     `input_fn` must be `None`.
 *  <b>`input_fn`</b>: Input function. If set, `x`, `y`, and `batch_size` must be
     `None`.
 *  <b>`feed_fn`</b>: Function creating a feed dict every time it is called. Called
@@ -1823,12 +1909,12 @@ to converge, and you want to split up training into subparts.
 ##### Args:
 
 
-*  <b>`x`</b>: matrix or tensor of shape [n_samples, n_features...]. Can be
-    iterator that returns arrays of features. The training input
-    samples for fitting the model. If set, `input_fn` must be `None`.
-*  <b>`y`</b>: vector or matrix [n_samples] or [n_samples, n_outputs]. Can be
-    iterator that returns array of targets. The training target values
-    (class label in classification, real numbers in regression). If set,
+*  <b>`x`</b>: Matrix of shape [n_samples, n_features...]. Can be iterator that
+     returns arrays of features. The training input samples for fitting the
+     model. If set, `input_fn` must be `None`.
+*  <b>`y`</b>: Vector or matrix [n_samples] or [n_samples, n_outputs]. Can be
+     iterator that returns array of targets. The training target values
+     (class labels in classification, real numbers in regression). If set,
      `input_fn` must be `None`.
 *  <b>`input_fn`</b>: Input function. If set, `x`, `y`, and `batch_size` must be
     `None`.
@@ -1962,8 +2048,13 @@ for which this evaluation was performed.
 ##### Args:
 
 
-*  <b>`x`</b>: features.
-*  <b>`y`</b>: targets.
+*  <b>`x`</b>: Matrix of shape [n_samples, n_features...]. Can be iterator that
+     returns arrays of features. The training input samples for fitting the
+     model. If set, `input_fn` must be `None`.
+*  <b>`y`</b>: Vector or matrix [n_samples] or [n_samples, n_outputs]. Can be
+     iterator that returns array of targets. The training target values
+     (class labels in classification, real numbers in regression). If set,
+     `input_fn` must be `None`.
 *  <b>`input_fn`</b>: Input function. If set, `x`, `y`, and `batch_size` must be
     `None`.
 *  <b>`feed_fn`</b>: Function creating a feed dict every time it is called. Called
@@ -2092,12 +2183,12 @@ to converge, and you want to split up training into subparts.
 ##### Args:
 
 
-*  <b>`x`</b>: matrix or tensor of shape [n_samples, n_features...]. Can be
-    iterator that returns arrays of features. The training input
-    samples for fitting the model. If set, `input_fn` must be `None`.
-*  <b>`y`</b>: vector or matrix [n_samples] or [n_samples, n_outputs]. Can be
-    iterator that returns array of targets. The training target values
-    (class label in classification, real numbers in regression). If set,
+*  <b>`x`</b>: Matrix of shape [n_samples, n_features...]. Can be iterator that
+     returns arrays of features. The training input samples for fitting the
+     model. If set, `input_fn` must be `None`.
+*  <b>`y`</b>: Vector or matrix [n_samples] or [n_samples, n_outputs]. Can be
+     iterator that returns array of targets. The training target values
+     (class labels in classification, real numbers in regression). If set,
      `input_fn` must be `None`.
 *  <b>`input_fn`</b>: Input function. If set, `x`, `y`, and `batch_size` must be
     `None`.
@@ -2514,7 +2605,7 @@ estimator = LinearClassifier(
 # Or estimator using the SDCAOptimizer.
 estimator = LinearClassifier(
    feature_columns=[occupation, education_x_occupation],
-   optimizer=tf.contrib.learn.SDCAOptimizer(
+   optimizer=tf.contrib.linear_optimizer.SDCAOptimizer(
      example_id_column='example_id',
      symmetric_l2_regularization=2.0
    ))
@@ -2537,6 +2628,9 @@ Input of `fit` and `evaluate` should have following features,
 * for each `column` in `feature_columns`:
   - if `column` is a `SparseColumn`, a feature with `key=column.name`
     whose `value` is a `SparseTensor`.
+  - if `column` is a `WeightedSparseColumn`, two features: the first with
+    `key` the id column name, the second with `key` the weight column name.
+    Both features' `value` must be a `SparseTensor`.
   - if `column` is a `RealValuedColumn`, a feature with `key=column.name`
     whose `value` is a `Tensor`.
   - if `feature_columns` is `None`, then `input` must contains only real
@@ -2615,8 +2709,13 @@ for which this evaluation was performed.
 ##### Args:
 
 
-*  <b>`x`</b>: features.
-*  <b>`y`</b>: targets.
+*  <b>`x`</b>: Matrix of shape [n_samples, n_features...]. Can be iterator that
+     returns arrays of features. The training input samples for fitting the
+     model. If set, `input_fn` must be `None`.
+*  <b>`y`</b>: Vector or matrix [n_samples] or [n_samples, n_outputs]. Can be
+     iterator that returns array of targets. The training target values
+     (class labels in classification, real numbers in regression). If set,
+     `input_fn` must be `None`.
 *  <b>`input_fn`</b>: Input function. If set, `x`, `y`, and `batch_size` must be
     `None`.
 *  <b>`feed_fn`</b>: Function creating a feed dict every time it is called. Called
@@ -2662,10 +2761,10 @@ Trains a model given training data `x` predictions and `y` targets.
 ##### Args:
 
 
-*  <b>`x`</b>: matrix or tensor of shape [n_samples, n_features...]. Can be
-     iterator that returns arrays of features. The training input
-     samples for fitting the model. If set, `input_fn` must be `None`.
-*  <b>`y`</b>: vector or matrix [n_samples] or [n_samples, n_outputs]. Can be
+*  <b>`x`</b>: Matrix of shape [n_samples, n_features...]. Can be iterator that
+     returns arrays of features. The training input samples for fitting the
+     model. If set, `input_fn` must be `None`.
+*  <b>`y`</b>: Vector or matrix [n_samples] or [n_samples, n_outputs]. Can be
      iterator that returns array of targets. The training target values
      (class labels in classification, real numbers in regression). If set,
      `input_fn` must be `None`.
@@ -2781,12 +2880,12 @@ to converge, and you want to split up training into subparts.
 ##### Args:
 
 
-*  <b>`x`</b>: matrix or tensor of shape [n_samples, n_features...]. Can be
-    iterator that returns arrays of features. The training input
-    samples for fitting the model. If set, `input_fn` must be `None`.
-*  <b>`y`</b>: vector or matrix [n_samples] or [n_samples, n_outputs]. Can be
-    iterator that returns array of targets. The training target values
-    (class label in classification, real numbers in regression). If set,
+*  <b>`x`</b>: Matrix of shape [n_samples, n_features...]. Can be iterator that
+     returns arrays of features. The training input samples for fitting the
+     model. If set, `input_fn` must be `None`.
+*  <b>`y`</b>: Vector or matrix [n_samples] or [n_samples, n_outputs]. Can be
+     iterator that returns array of targets. The training target values
+     (class labels in classification, real numbers in regression). If set,
      `input_fn` must be `None`.
 *  <b>`input_fn`</b>: Input function. If set, `x`, `y`, and `batch_size` must be
     `None`.
@@ -2809,9 +2908,9 @@ to converge, and you want to split up training into subparts.
 
 - - -
 
-#### `tf.contrib.learn.LinearClassifier.predict(x=None, input_fn=None, batch_size=None)` {#LinearClassifier.predict}
+#### `tf.contrib.learn.LinearClassifier.predict(x=None, input_fn=None, batch_size=None, as_iterable=False)` {#LinearClassifier.predict}
 
-Returns predictions for given features.
+Returns predicted classes for given features.
 
 ##### Args:
 
@@ -2819,15 +2918,20 @@ Returns predictions for given features.
 *  <b>`x`</b>: features.
 *  <b>`input_fn`</b>: Input function. If set, x must be None.
 *  <b>`batch_size`</b>: Override default batch size.
+*  <b>`as_iterable`</b>: If True, return an iterable which keeps yielding predictions
+    for each example until inputs are exhausted. Note: The inputs must
+    terminate if you want the iterable to terminate (e.g. be sure to pass
+    num_epochs=1 if you are using something like read_batch_features).
 
 ##### Returns:
 
-  Numpy array of predicted classes or regression values.
+  Numpy array of predicted classes (or an iterable of predicted classes if
+  as_iterable is True).
 
 
 - - -
 
-#### `tf.contrib.learn.LinearClassifier.predict_proba(x=None, input_fn=None, batch_size=None)` {#LinearClassifier.predict_proba}
+#### `tf.contrib.learn.LinearClassifier.predict_proba(x=None, input_fn=None, batch_size=None, as_iterable=False)` {#LinearClassifier.predict_proba}
 
 Returns prediction probabilities for given features.
 
@@ -2837,10 +2941,15 @@ Returns prediction probabilities for given features.
 *  <b>`x`</b>: features.
 *  <b>`input_fn`</b>: Input function. If set, x and y must be None.
 *  <b>`batch_size`</b>: Override default batch size.
+*  <b>`as_iterable`</b>: If True, return an iterable which keeps yielding predictions
+    for each example until inputs are exhausted. Note: The inputs must
+    terminate if you want the iterable to terminate (e.g. be sure to pass
+    num_epochs=1 if you are using something like read_batch_features).
 
 ##### Returns:
 
-  Numpy array of predicted probabilities.
+  Numpy array of predicted probabilities (or an iterable of predicted
+  probabilities if as_iterable is True).
 
 
 - - -
@@ -2918,6 +3027,9 @@ Input of `fit` and `evaluate` should have following features,
 * for column in `feature_columns`:
   - if isinstance(column, `SparseColumn`):
       key=column.name, value=a `SparseTensor`
+  - if isinstance(column, `WeightedSparseColumn`):
+      {key=id column name, value=a `SparseTensor`,
+       key=weight column name, value=a `SparseTensor`}
   - if isinstance(column, `RealValuedColumn`):
       key=column.name, value=a `Tensor`
   - if `feature_columns` is `None`:
@@ -2995,8 +3107,13 @@ for which this evaluation was performed.
 ##### Args:
 
 
-*  <b>`x`</b>: features.
-*  <b>`y`</b>: targets.
+*  <b>`x`</b>: Matrix of shape [n_samples, n_features...]. Can be iterator that
+     returns arrays of features. The training input samples for fitting the
+     model. If set, `input_fn` must be `None`.
+*  <b>`y`</b>: Vector or matrix [n_samples] or [n_samples, n_outputs]. Can be
+     iterator that returns array of targets. The training target values
+     (class labels in classification, real numbers in regression). If set,
+     `input_fn` must be `None`.
 *  <b>`input_fn`</b>: Input function. If set, `x`, `y`, and `batch_size` must be
     `None`.
 *  <b>`feed_fn`</b>: Function creating a feed dict every time it is called. Called
@@ -3042,10 +3159,10 @@ Trains a model given training data `x` predictions and `y` targets.
 ##### Args:
 
 
-*  <b>`x`</b>: matrix or tensor of shape [n_samples, n_features...]. Can be
-     iterator that returns arrays of features. The training input
-     samples for fitting the model. If set, `input_fn` must be `None`.
-*  <b>`y`</b>: vector or matrix [n_samples] or [n_samples, n_outputs]. Can be
+*  <b>`x`</b>: Matrix of shape [n_samples, n_features...]. Can be iterator that
+     returns arrays of features. The training input samples for fitting the
+     model. If set, `input_fn` must be `None`.
+*  <b>`y`</b>: Vector or matrix [n_samples] or [n_samples, n_outputs]. Can be
      iterator that returns array of targets. The training target values
      (class labels in classification, real numbers in regression). If set,
      `input_fn` must be `None`.
@@ -3161,12 +3278,12 @@ to converge, and you want to split up training into subparts.
 ##### Args:
 
 
-*  <b>`x`</b>: matrix or tensor of shape [n_samples, n_features...]. Can be
-    iterator that returns arrays of features. The training input
-    samples for fitting the model. If set, `input_fn` must be `None`.
-*  <b>`y`</b>: vector or matrix [n_samples] or [n_samples, n_outputs]. Can be
-    iterator that returns array of targets. The training target values
-    (class label in classification, real numbers in regression). If set,
+*  <b>`x`</b>: Matrix of shape [n_samples, n_features...]. Can be iterator that
+     returns arrays of features. The training input samples for fitting the
+     model. If set, `input_fn` must be `None`.
+*  <b>`y`</b>: Vector or matrix [n_samples] or [n_samples, n_outputs]. Can be
+     iterator that returns array of targets. The training target values
+     (class labels in classification, real numbers in regression). If set,
      `input_fn` must be `None`.
 *  <b>`input_fn`</b>: Input function. If set, `x`, `y`, and `batch_size` must be
     `None`.
@@ -3189,20 +3306,37 @@ to converge, and you want to split up training into subparts.
 
 - - -
 
-#### `tf.contrib.learn.LinearRegressor.predict(x=None, input_fn=None, batch_size=None)` {#LinearRegressor.predict}
+#### `tf.contrib.learn.LinearRegressor.predict(x=None, input_fn=None, batch_size=None, outputs=None, as_iterable=False)` {#LinearRegressor.predict}
 
 Returns predictions for given features.
 
 ##### Args:
 
 
-*  <b>`x`</b>: features.
-*  <b>`input_fn`</b>: Input function. If set, x must be None.
-*  <b>`batch_size`</b>: Override default batch size.
+*  <b>`x`</b>: Matrix of shape [n_samples, n_features...]. Can be iterator that
+     returns arrays of features. The training input samples for fitting the
+     model. If set, `input_fn` must be `None`.
+*  <b>`input_fn`</b>: Input function. If set, `x` and 'batch_size' must be `None`.
+*  <b>`batch_size`</b>: Override default batch size. If set, 'input_fn' must be
+    'None'.
+*  <b>`outputs`</b>: list of `str`, name of the output to predict.
+    If `None`, returns all.
+*  <b>`as_iterable`</b>: If True, return an iterable which keeps yielding predictions
+    for each example until inputs are exhausted. Note: The inputs must
+    terminate if you want the iterable to terminate (e.g. be sure to pass
+    num_epochs=1 if you are using something like read_batch_features).
 
 ##### Returns:
 
-  Numpy array of predicted classes or regression values.
+  A numpy array of predicted classes or regression values if the
+  constructor's `model_fn` returns a `Tensor` for `predictions` or a `dict`
+  of numpy arrays if `model_fn` returns a `dict`. Returns an iterable of
+  predictions if as_iterable is True.
+
+##### Raises:
+
+
+*  <b>`ValueError`</b>: If x and input_fn are both provided or both `None`.
 
 
 - - -
@@ -3292,8 +3426,13 @@ for which this evaluation was performed.
 ##### Args:
 
 
-*  <b>`x`</b>: features.
-*  <b>`y`</b>: targets.
+*  <b>`x`</b>: Matrix of shape [n_samples, n_features...]. Can be iterator that
+     returns arrays of features. The training input samples for fitting the
+     model. If set, `input_fn` must be `None`.
+*  <b>`y`</b>: Vector or matrix [n_samples] or [n_samples, n_outputs]. Can be
+     iterator that returns array of targets. The training target values
+     (class labels in classification, real numbers in regression). If set,
+     `input_fn` must be `None`.
 *  <b>`input_fn`</b>: Input function. If set, `x`, `y`, and `batch_size` must be
     `None`.
 *  <b>`feed_fn`</b>: Function creating a feed dict every time it is called. Called
@@ -3422,12 +3561,12 @@ to converge, and you want to split up training into subparts.
 ##### Args:
 
 
-*  <b>`x`</b>: matrix or tensor of shape [n_samples, n_features...]. Can be
-    iterator that returns arrays of features. The training input
-    samples for fitting the model. If set, `input_fn` must be `None`.
-*  <b>`y`</b>: vector or matrix [n_samples] or [n_samples, n_outputs]. Can be
-    iterator that returns array of targets. The training target values
-    (class label in classification, real numbers in regression). If set,
+*  <b>`x`</b>: Matrix of shape [n_samples, n_features...]. Can be iterator that
+     returns arrays of features. The training input samples for fitting the
+     model. If set, `input_fn` must be `None`.
+*  <b>`y`</b>: Vector or matrix [n_samples] or [n_samples, n_outputs]. Can be
+     iterator that returns array of targets. The training target values
+     (class labels in classification, real numbers in regression). If set,
      `input_fn` must be `None`.
 *  <b>`input_fn`</b>: Input function. If set, `x`, `y`, and `batch_size` must be
     `None`.
@@ -3561,8 +3700,13 @@ for which this evaluation was performed.
 ##### Args:
 
 
-*  <b>`x`</b>: features.
-*  <b>`y`</b>: targets.
+*  <b>`x`</b>: Matrix of shape [n_samples, n_features...]. Can be iterator that
+     returns arrays of features. The training input samples for fitting the
+     model. If set, `input_fn` must be `None`.
+*  <b>`y`</b>: Vector or matrix [n_samples] or [n_samples, n_outputs]. Can be
+     iterator that returns array of targets. The training target values
+     (class labels in classification, real numbers in regression). If set,
+     `input_fn` must be `None`.
 *  <b>`input_fn`</b>: Input function. If set, `x`, `y`, and `batch_size` must be
     `None`.
 *  <b>`feed_fn`</b>: Function creating a feed dict every time it is called. Called
@@ -3691,12 +3835,12 @@ to converge, and you want to split up training into subparts.
 ##### Args:
 
 
-*  <b>`x`</b>: matrix or tensor of shape [n_samples, n_features...]. Can be
-    iterator that returns arrays of features. The training input
-    samples for fitting the model. If set, `input_fn` must be `None`.
-*  <b>`y`</b>: vector or matrix [n_samples] or [n_samples, n_outputs]. Can be
-    iterator that returns array of targets. The training target values
-    (class label in classification, real numbers in regression). If set,
+*  <b>`x`</b>: Matrix of shape [n_samples, n_features...]. Can be iterator that
+     returns arrays of features. The training input samples for fitting the
+     model. If set, `input_fn` must be `None`.
+*  <b>`y`</b>: Vector or matrix [n_samples] or [n_samples, n_outputs]. Can be
+     iterator that returns array of targets. The training target values
+     (class labels in classification, real numbers in regression). If set,
      `input_fn` must be `None`.
 *  <b>`input_fn`</b>: Input function. If set, `x`, `y`, and `batch_size` must be
     `None`.
@@ -4475,8 +4619,13 @@ for which this evaluation was performed.
 ##### Args:
 
 
-*  <b>`x`</b>: features.
-*  <b>`y`</b>: targets.
+*  <b>`x`</b>: Matrix of shape [n_samples, n_features...]. Can be iterator that
+     returns arrays of features. The training input samples for fitting the
+     model. If set, `input_fn` must be `None`.
+*  <b>`y`</b>: Vector or matrix [n_samples] or [n_samples, n_outputs]. Can be
+     iterator that returns array of targets. The training target values
+     (class labels in classification, real numbers in regression). If set,
+     `input_fn` must be `None`.
 *  <b>`input_fn`</b>: Input function. If set, `x`, `y`, and `batch_size` must be
     `None`.
 *  <b>`feed_fn`</b>: Function creating a feed dict every time it is called. Called
@@ -4605,12 +4754,12 @@ to converge, and you want to split up training into subparts.
 ##### Args:
 
 
-*  <b>`x`</b>: matrix or tensor of shape [n_samples, n_features...]. Can be
-    iterator that returns arrays of features. The training input
-    samples for fitting the model. If set, `input_fn` must be `None`.
-*  <b>`y`</b>: vector or matrix [n_samples] or [n_samples, n_outputs]. Can be
-    iterator that returns array of targets. The training target values
-    (class label in classification, real numbers in regression). If set,
+*  <b>`x`</b>: Matrix of shape [n_samples, n_features...]. Can be iterator that
+     returns arrays of features. The training input samples for fitting the
+     model. If set, `input_fn` must be `None`.
+*  <b>`y`</b>: Vector or matrix [n_samples] or [n_samples, n_outputs]. Can be
+     iterator that returns array of targets. The training target values
+     (class labels in classification, real numbers in regression). If set,
      `input_fn` must be `None`.
 *  <b>`input_fn`</b>: Input function. If set, `x`, `y`, and `batch_size` must be
     `None`.
@@ -4825,33 +4974,9 @@ init all variables.
 
 - - -
 
-### `tf.contrib.learn.run_feeds(output_dict, feed_dicts, restore_checkpoint_path=None)` {#run_feeds}
+### `tf.contrib.learn.run_feeds(*args, **kwargs)` {#run_feeds}
 
-Run `output_dict` tensors with each input in `feed_dicts`.
-
-If `restore_checkpoint_path` is supplied, restore from checkpoint. Otherwise,
-init all variables.
-
-##### Args:
-
-
-*  <b>`output_dict`</b>: A `dict` mapping string names to `Tensor` objects to run.
-    Tensors must all be from the same graph.
-*  <b>`feed_dicts`</b>: Iterable of `dict` objects of input values to feed.
-*  <b>`restore_checkpoint_path`</b>: A string containing the path to a checkpoint to
-    restore.
-
-##### Returns:
-
-  A list of dicts of values read from `output_dict` tensors, one item in the
-  list for each item in `feed_dicts`. Keys are the same as `output_dict`,
-  values are the results read from the corresponding `Tensor` in
-  `output_dict`.
-
-##### Raises:
-
-
-*  <b>`ValueError`</b>: if `output_dict` or `feed_dicts` is None or empty.
+See run_feeds_iter(). Returns a `list` instead of an iterator.
 
 
 - - -
@@ -5083,7 +5208,7 @@ Use `parse_fn` if you need to do parsing / processing on single examples.
 
 - - -
 
-### `tf.contrib.learn.read_batch_features(file_pattern, batch_size, features, reader, randomize_input=True, num_epochs=None, queue_capacity=10000, reader_num_threads=1, parser_num_threads=1, read_batch_size=1, name=None)` {#read_batch_features}
+### `tf.contrib.learn.read_batch_features(file_pattern, batch_size, features, reader, randomize_input=True, num_epochs=None, queue_capacity=10000, reader_num_threads=1, parser_num_threads=1, name=None)` {#read_batch_features}
 
 Adds operations to read, queue, batch and parse `Example` protos.
 
@@ -5115,7 +5240,6 @@ All ops are added to the default graph.
 *  <b>`queue_capacity`</b>: Capacity for input queue.
 *  <b>`reader_num_threads`</b>: The number of threads to read examples.
 *  <b>`parser_num_threads`</b>: The number of threads to parse examples.
-*  <b>`read_batch_size`</b>: An int or scalar `Tensor` specifying the number of
     records to read at once
 *  <b>`name`</b>: Name of resulting op.
 

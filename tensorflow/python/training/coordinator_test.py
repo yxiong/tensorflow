@@ -68,7 +68,7 @@ class CoordinatorTest(tf.test.TestCase):
     threading.Thread(target=StopInN, args=(coord, 0.02)).start()
     self.assertFalse(coord.should_stop())
     self.assertFalse(coord.wait_for_stop(0.01))
-    self.assertTrue(coord.wait_for_stop(0.03))
+    self.assertTrue(coord.wait_for_stop(0.05))
     self.assertTrue(coord.should_stop())
 
   def testJoin(self):
@@ -102,7 +102,7 @@ class CoordinatorTest(tf.test.TestCase):
         threading.Thread(target=RaiseInN,
                          args=(coord, 0.01, RuntimeError("First"), False)),
         threading.Thread(target=RaiseInN,
-                         args=(coord, 0.02, RuntimeError("Too late"), False))]
+                         args=(coord, 0.05, RuntimeError("Too late"), False))]
     for t in threads:
       t.start()
     with self.assertRaisesRegexp(RuntimeError, "First"):
@@ -114,7 +114,7 @@ class CoordinatorTest(tf.test.TestCase):
         threading.Thread(target=RaiseInN,
                          args=(coord, 0.01, RuntimeError("First"), True)),
         threading.Thread(target=RaiseInN,
-                         args=(coord, 0.02, RuntimeError("Too late"), True))]
+                         args=(coord, 0.05, RuntimeError("Too late"), True))]
     for t in threads:
       t.start()
     with self.assertRaisesRegexp(RuntimeError, "First"):
@@ -132,13 +132,23 @@ class CoordinatorTest(tf.test.TestCase):
       t.start()
     coord.join(threads)
 
+  def testJoinIgnoresMyExceptionType(self):
+    coord = tf.train.Coordinator(clean_stop_exception_types=(ValueError,))
+    threads = [
+        threading.Thread(target=RaiseInN,
+                         args=(coord, 0.01, ValueError("Clean stop"), True))
+        ]
+    for t in threads:
+      t.start()
+    coord.join(threads)
+
   def testJoinRaiseReportExceptionUsingHandler(self):
     coord = tf.train.Coordinator()
     threads = [
         threading.Thread(target=RaiseInNUsingContextHandler,
                          args=(coord, 0.01, RuntimeError("First"))),
         threading.Thread(target=RaiseInNUsingContextHandler,
-                         args=(coord, 0.02, RuntimeError("Too late")))]
+                         args=(coord, 0.05, RuntimeError("Too late")))]
     for t in threads:
       t.start()
     with self.assertRaisesRegexp(RuntimeError, "First"):

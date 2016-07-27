@@ -12,6 +12,7 @@ licenses(["notice"])  # Apache 2.0
 
 load("//tensorflow:tensorflow.bzl", "py_tests")
 load("//tensorflow:tensorflow.bzl", "cuda_py_tests")
+load("//tensorflow:tensorflow.bzl", "cuda_py_test")
 
 py_tests(
     name = "cpu_only_kernel_tests",
@@ -39,11 +40,11 @@ py_tests(
         "io_ops_test.py",
         "listdiff_op_test.py",
         "logging_ops_test.py",
-        "lrn_op_test.py",
         "matrix_inverse_op_test.py",
         "matrix_solve_ls_op_test.py",
         "matrix_solve_op_test.py",
         "matrix_triangular_solve_op_test.py",
+        "parameterized_truncated_normal_op_test.py",
         "parsing_ops_test.py",
         "partitioned_variables_test.py",
         "priority_queue_test.py",
@@ -60,6 +61,7 @@ py_tests(
         "sparsemask_op_test.py",
         "string_join_op_test.py",
         "summary_ops_test.py",
+        "summary_tensor_op_test.py",
         "template_test.py",
         "topk_op_test.py",
         "unique_op_test.py",
@@ -67,6 +69,13 @@ py_tests(
         "variables_test.py",
         "where_op_test.py",
     ],
+)
+
+cuda_py_test(
+    name = "dense_update_ops_no_tsan_test",
+    size = "small",
+    srcs = ["dense_update_ops_no_tsan_test.py"],
+    tags = ["notsan"],
 )
 
 py_tests(
@@ -79,6 +88,13 @@ py_tests(
 )
 
 cuda_py_tests(
+    name = "cast_op_test",
+    size = "small",
+    srcs = ["cast_op_test.py"],
+    tags = ["noasan"],
+)
+
+cuda_py_tests(
     name = "kernel_tests",
     size = "small",
     srcs = [
@@ -88,13 +104,15 @@ cuda_py_tests(
         "batchtospace_op_test.py",
         "bias_op_test.py",
         "bitcast_op_test.py",
-        "cast_op_test.py",
         "check_ops_test.py",
         "constant_op_test.py",
         "control_flow_ops_py_test.py",
+        "conv1d_test.py",
+        "conv2d_backprop_filter_grad_test.py",
+        "conv2d_transpose_test.py",
+        "conv3d_backprop_filter_v2_grad_test.py",
         "cross_grad_test.py",
         "denormal_test.py",
-        "dense_update_ops_no_tsan_test.py",
         "dense_update_ops_test.py",
         "depthtospace_op_test.py",
         "depthwise_conv_op_test.py",
@@ -108,6 +126,7 @@ cuda_py_tests(
         "gradient_correctness_test.py",
         "init_ops_test.py",
         "linalg_ops_test.py",
+        "lrn_op_test.py",
         "matmul_op_test.py",
         "morphological_ops_test.py",
         "multinomial_op_test.py",
@@ -127,6 +146,7 @@ cuda_py_tests(
         "reverse_sequence_op_test.py",
         "rnn_cell_test.py",
         "scalar_strict_test.py",
+        "scan_ops_test.py",
         "session_ops_test.py",
         "shape_ops_test.py",
         "softmax_op_test.py",
@@ -158,6 +178,7 @@ cuda_py_tests(
     size = "medium",
     srcs = [
         "concat_op_test.py",
+        "conv3d_transpose_test.py",
         "conv_ops_test.py",
         "division_future_test.py",
         "fft_ops_test.py",
@@ -184,6 +205,7 @@ cuda_py_tests(
         "linalg_grad_test.py",
     ],
     shard_count = 50,
+    tags = ["notap"],  # b/30226163
 )
 
 filegroup(

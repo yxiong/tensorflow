@@ -7,7 +7,7 @@ Note: Functions taking `Tensor` arguments can also take anything accepted by
 
 [TOC]
 
-## Activation Functions
+## Activation Functions.
 
 The activation ops provide different types of nonlinearities for use in neural
 networks.  These include smooth nonlinearities (`sigmoid`, `tanh`, `elu`,
@@ -367,7 +367,7 @@ same horizontal and vertical strides, `strides = [1, stride, stride, 1]`.
     `[filter_height, filter_width, in_channels, channel_multiplier]`.
 *  <b>`strides`</b>: 1-D of size 4.  The stride of the sliding window for each
     dimension of `input`.
-*  <b>`padding`</b>: A string, either `'VALID'` or `'SAME'`.  The padding algorithm.
+*  <b>`padding`</b>: A string, either `'VALID'` or `'SAME'`. The padding algorithm.
     See the [comment here](https://www.tensorflow.org/api_docs/python/nn.html#convolution)
 *  <b>`name`</b>: A name for this operation (optional).
 
@@ -1058,8 +1058,8 @@ When using these moments for batch normalization (see
 *  <b>`shift`</b>: A `Tensor` containing the value by which to shift the data for
     numerical stability, or `None` if no shift is to be performed. A shift
     close to the true mean provides the most numerically stable results.
-*  <b>`keep_dims`</b>: produce moments with the same dimensionality as the input.
 *  <b>`name`</b>: Name used to scope the operations that compute the moments.
+*  <b>`keep_dims`</b>: produce moments with the same dimensionality as the input.
 
 ##### Returns:
 
@@ -1219,7 +1219,7 @@ on `logits` internally for efficiency.  Do not call this op with the
 output of `softmax`, as it will produce incorrect results.
 
 `logits` and `labels` must have the same shape `[batch_size, num_classes]`
-and the same dtype (either `float32` or `float64`).
+and the same dtype (either `float16`, `float32`, or `float64`).
 
 ##### Args:
 
@@ -1481,10 +1481,14 @@ Creates a recurrent neural network specified by RNNCell `cell`.
 This function is functionally identical to the function `rnn` above, but
 performs fully dynamic unrolling of `inputs`.
 
-Unlike `rnn`, the input `inputs` is not a Python list of `Tensors`.  Instead,
-it is a single `Tensor` where the maximum time is either the first or second
-dimension (see the parameter `time_major`).  The corresponding output is
-a single `Tensor` having the same number of time steps and batch size.
+Unlike `rnn`, the input `inputs` is not a Python list of `Tensors`, one for
+each frame.  Instead, `inputs` may be a single `Tensor` where
+the maximum time is either the first or second dimension (see the parameter
+`time_major`).  Alternatively, it may be a (possibly nested) tuple of
+Tensors, each of them having matching batch and time dimensions.
+The corresponding output is either a single `Tensor` having the same number
+of time steps and batch size, or a (possibly nested) tuple of such tensors,
+matching the nested structure of `cell.output_size`.
 
 The parameter `sequence_length` is required and dynamic calculation is
 automatically performed.
@@ -1494,20 +1498,34 @@ automatically performed.
 
 *  <b>`cell`</b>: An instance of RNNCell.
 *  <b>`inputs`</b>: The RNN inputs.
-    If time_major == False (default), this must be a tensor of shape:
-      `[batch_size, max_time, input_size]`, or a nested tuple of such
+
+    If `time_major == False` (default), this must be a `Tensor` of shape:
+      `[batch_size, max_time, ...]`, or a nested tuple of such
       elements.
-    If time_major == True, this must be a tensor of shape:
-      `[max_time, batch_size, input_size]`, or a nested tuple of such
+
+    If `time_major == True`, this must be a `Tensor` of shape:
+      `[max_time, batch_size, ...]`, or a nested tuple of such
       elements.
+
+    This may also be a (possibly nested) tuple of Tensors satisfying
+    this property.  The first two dimensions must match across all the inputs,
+    but otherwise the ranks and other shape components may differ.
+    In this case, input to `cell` at each time-step will replicate the
+    structure of these tuples, except for the time dimension (from which the
+    time is taken).
+
+    The input to `cell` at each time step will be a `Tensor` or (possibly
+    nested) tuple of Tensors each with dimensions `[batch_size, ...]`.
+
 *  <b>`sequence_length`</b>: (optional) An int32/int64 vector sized `[batch_size]`.
 *  <b>`initial_state`</b>: (optional) An initial state for the RNN.
     If `cell.state_size` is an integer, this must be
-    a tensor of appropriate type and shape `[batch_size x cell.state_size]`.
+    a `Tensor` of appropriate type and shape `[batch_size x cell.state_size]`.
     If `cell.state_size` is a tuple, this should be a tuple of
     tensors having shapes `[batch_size, s] for s in cell.state_size`.
-*  <b>`dtype`</b>: (optional) The data type for the initial state.  Required if
-    initial_state is not provided.
+*  <b>`dtype`</b>: (optional) The data type for the initial state and expected output.
+    Required if initial_state is not provided or RNN state has a heterogeneous
+    dtype.
 *  <b>`parallel_iterations`</b>: (Default: 32).  The number of iterations to run in
     parallel.  Those operations which do not have any temporal dependency
     and can be run in parallel, will be.  This parameter trades off
@@ -1530,14 +1548,26 @@ automatically performed.
 
   A pair (outputs, state) where:
 
+
 *  <b>`outputs`</b>: The RNN output `Tensor`.
+
       If time_major == False (default), this will be a `Tensor` shaped:
         `[batch_size, max_time, cell.output_size]`.
+
       If time_major == True, this will be a `Tensor` shaped:
         `[max_time, batch_size, cell.output_size]`.
-*  <b>`state`</b>: The final state.  If `cell.state_size` is a `Tensor`, this
-      will be shaped `[batch_size, cell.state_size]`.  If it is a tuple,
-      this be a tuple with shapes `[batch_size, s] for s in cell.state_size`.
+
+      Note, if `cell.output_size` is a (possibly nested) tuple of integers
+      or `TensorShape` objects, then `outputs` will be a tuple having the
+      same structure as `cell.output_size`, containing Tensors having shapes
+      corresponding to the shape data in `cell.output_size`.
+
+
+*  <b>`state`</b>: The final state.  If `cell.state_size` is an int, this
+      will be shaped `[batch_size, cell.state_size]`.  If it is a
+      `TensorShape`, this will be shaped `[batch_size] + cell.state_size`.
+      If it is a (possibly nested) tuple of ints or `TensorShape`, this will
+      be a tuple having the corresponding shapes.
 
 ##### Raises:
 
@@ -1580,15 +1610,16 @@ The dynamic calculation performed is, at time t for batch row b,
 
 
 *  <b>`cell`</b>: An instance of RNNCell.
-*  <b>`inputs`</b>: A length T list of inputs, each a tensor of shape
-    [batch_size, input_size], or a nested tuple of such elements.
+*  <b>`inputs`</b>: A length T list of inputs, each a `Tensor` of shape
+    `[batch_size, input_size]`, or a nested tuple of such elements.
 *  <b>`initial_state`</b>: (optional) An initial state for the RNN.
     If `cell.state_size` is an integer, this must be
-    a tensor of appropriate type and shape `[batch_size x cell.state_size]`.
+    a `Tensor` of appropriate type and shape `[batch_size, cell.state_size]`.
     If `cell.state_size` is a tuple, this should be a tuple of
     tensors having shapes `[batch_size, s] for s in cell.state_size`.
-*  <b>`dtype`</b>: (optional) The data type for the initial state.  Required if
-    initial_state is not provided.
+*  <b>`dtype`</b>: (optional) The data type for the initial state and expected output.
+    Required if initial_state is not provided or RNN state has a heterogeneous
+    dtype.
 *  <b>`sequence_length`</b>: Specifies the length of each sequence in inputs.
     An int32 or int64 vector (tensor) size `[batch_size]`, values in `[0, T)`.
 *  <b>`scope`</b>: VariableScope for the created subgraph; defaults to "RNN".
@@ -1618,7 +1649,7 @@ RNN that accepts a state saver for time-truncated RNN calculation.
 
 
 *  <b>`cell`</b>: An instance of `RNNCell`.
-*  <b>`inputs`</b>: A length T list of inputs, each a tensor of shape
+*  <b>`inputs`</b>: A length T list of inputs, each a `Tensor` of shape
     `[batch_size, input_size]`.
 *  <b>`state_saver`</b>: A state saver object with methods `state` and `save_state`.
 *  <b>`state_name`</b>: Python string or tuple of strings.  The name to use with the
@@ -2380,9 +2411,9 @@ Batch normalization.
 
 As described in http://arxiv.org/abs/1502.03167.
 Normalizes a tensor by `mean` and `variance`, and applies (optionally) a
-`scale` \\(\gamma\\) to it, as well as an `offset` \\(\beta\\):
+`scale` \\\\(\gamma\\\\) to it, as well as an `offset` \\\\(\\beta\\\\):
 
-\\(\frac{\gamma(x-\mu)}{\sigma}+\beta\\)
+\\\\(\\frac{\gamma(x-\mu)}{\sigma}+\\beta\\\\)
 
 `mean`, `variance`, `offset` and `scale` are all expected to be of one of two
 shapes:
@@ -2409,9 +2440,9 @@ shapes:
 *  <b>`x`</b>: Input `Tensor` of arbitrary dimensionality.
 *  <b>`mean`</b>: A mean `Tensor`.
 *  <b>`variance`</b>: A variance `Tensor`.
-*  <b>`offset`</b>: An offset `Tensor`, often denoted \\(\beta\\) in equations, or
+*  <b>`offset`</b>: An offset `Tensor`, often denoted \\\\(\\beta\\\\) in equations, or
     None. If present, will be added to the normalized tensor.
-*  <b>`scale`</b>: A scale `Tensor`, often denoted \\(\gamma\\) in equations, or
+*  <b>`scale`</b>: A scale `Tensor`, often denoted \\\\(\gamma\\\\) in equations, or
     `None`. If present, the scale is applied to the normalized tensor.
 *  <b>`variance_epsilon`</b>: A small float number to avoid dividing by 0.
 *  <b>`name`</b>: A name for this operation (optional).

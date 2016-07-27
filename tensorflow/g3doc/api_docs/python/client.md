@@ -84,8 +84,9 @@ the session constructor.
 
 
 *  <b>`target`</b>: (Optional.) The execution engine to connect to.
-    Defaults to using an in-process engine. At present, no value
-    other than the empty string is supported.
+    Defaults to using an in-process engine. See [Distributed Tensorflow]
+    (https://www.tensorflow.org/how_tos/distributed/index.html)
+    for more examples.
 *  <b>`graph`</b>: (Optional.) The `Graph` to be launched (described above).
 *  <b>`config`</b>: (Optional.) A [`ConfigProto`](https://www.tensorflow.org/code/tensorflow/core/protobuf/config.proto)
     protocol buffer with configuration options for the session.
@@ -210,7 +211,7 @@ Returns a context manager that makes this object the default session.
 
 Use with the `with` keyword to specify that calls to
 [`Operation.run()`](../../api_docs/python/framework.md#Operation.run) or
-[`Tensor.run()`](../../api_docs/python/framework.md#Tensor.run) should be
+[`Tensor.eval()`](../../api_docs/python/framework.md#Tensor.eval) should be
 executed in this session.
 
 ```python
