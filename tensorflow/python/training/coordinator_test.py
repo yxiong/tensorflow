@@ -47,7 +47,9 @@ def RaiseInNUsingContextHandler(coord, n_secs, ex):
     raise ex
 
 
-def SleepABit(n_secs):
+def SleepABit(n_secs, coord=None):
+  if coord:
+    coord.register_thread(threading.current_thread())
   time.sleep(n_secs)
 
 
@@ -80,6 +82,33 @@ class CoordinatorTest(tf.test.TestCase):
     for t in threads:
       t.start()
     coord.join(threads)
+    for t in threads:
+      self.assertFalse(t.is_alive())
+
+  def testJoinAllRegistered(self):
+    coord = tf.train.Coordinator()
+    threads = [
+        threading.Thread(target=SleepABit, args=(0.01, coord)),
+        threading.Thread(target=SleepABit, args=(0.02, coord)),
+        threading.Thread(target=SleepABit, args=(0.01, coord))]
+    for t in threads:
+      t.start()
+    coord.join()
+    for t in threads:
+      self.assertFalse(t.is_alive())
+
+  def testJoinSomeRegistered(self):
+    coord = tf.train.Coordinator()
+    threads = [
+        threading.Thread(target=SleepABit, args=(0.01, coord)),
+        threading.Thread(target=SleepABit, args=(0.02,)),
+        threading.Thread(target=SleepABit, args=(0.01, coord))]
+    for t in threads:
+      t.start()
+    # threads[1] is not registred we must pass it in.
+    coord.join(threads[1:1])
+    for t in threads:
+      self.assertFalse(t.is_alive())
 
   def testJoinGraceExpires(self):
     def TestWithGracePeriod(stop_grace_period):
@@ -173,6 +202,49 @@ class CoordinatorTest(tf.test.TestCase):
       t.start()
     with self.assertRaisesRegexp(RuntimeError, "Second"):
       coord.join(threads)
+
+  def testRequestStopRaisesIfJoined(self):
+    coord = tf.train.Coordinator()
+    # Join the coordinator right away.
+    coord.join([])
+    reported = False
+    with self.assertRaisesRegexp(RuntimeError, "Too late"):
+      try:
+        raise RuntimeError("Too late")
+      except RuntimeError as e:
+        reported = True
+        coord.request_stop(e)
+    self.assertTrue(reported)
+    # If we clear_stop the exceptions are handled normally.
+    coord.clear_stop()
+    try:
+      raise RuntimeError("After clear")
+    except RuntimeError as e:
+      coord.request_stop(e)
+    with self.assertRaisesRegexp(RuntimeError, "After clear"):
+      coord.join([])
+
+  def testRequestStopRaisesIfJoined_ExcInfo(self):
+    # Same as testRequestStopRaisesIfJoined but using syc.exc_info().
+    coord = tf.train.Coordinator()
+    # Join the coordinator right away.
+    coord.join([])
+    reported = False
+    with self.assertRaisesRegexp(RuntimeError, "Too late"):
+      try:
+        raise RuntimeError("Too late")
+      except RuntimeError:
+        reported = True
+        coord.request_stop(sys.exc_info())
+    self.assertTrue(reported)
+    # If we clear_stop the exceptions are handled normally.
+    coord.clear_stop()
+    try:
+      raise RuntimeError("After clear")
+    except RuntimeError:
+      coord.request_stop(sys.exc_info())
+    with self.assertRaisesRegexp(RuntimeError, "After clear"):
+      coord.join([])
 
 
 def _StopAt0(coord, n):

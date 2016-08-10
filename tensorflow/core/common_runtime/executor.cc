@@ -853,9 +853,6 @@ class ExecutorState {
   bool NodeDone(const Status& s, const Node* node, const TaggedNodeSeq& ready,
                 NodeExecStats* stats, TaggedNodeReadyQueue* inline_ready);
 
-  // Call Process() on all nodes in 'inline_ready'.
-  void ProcessInline(const TaggedNodeReadyQueue& inline_ready);
-
   // Schedule all the expensive nodes in 'ready', and put all the inexpensive
   // nodes in 'ready' into 'inline_ready'.
   void ScheduleReady(const TaggedNodeSeq& ready,
@@ -921,6 +918,10 @@ ExecutorState::ExecutorState(const Executor::Args& args, ExecutorImpl* impl)
 
   // Initialize the executor state.
   outstanding_frames_.insert({root_frame_->frame_name, root_frame_});
+
+  if (args.step_resource_manager_init) {
+    args.step_resource_manager_init(&step_resource_manager_);
+  }
 }
 
 ExecutorState::~ExecutorState() {
@@ -1654,17 +1655,6 @@ bool ExecutorState::NodeDone(const Status& s, const Node* node,
   return completed;
 }
 
-void ExecutorState::ProcessInline(const TaggedNodeReadyQueue& inline_ready) {
-  if (inline_ready.empty()) return;
-  int64 scheduled_usec = 0;
-  if (stats_collector_) {
-    scheduled_usec = nodestats::NowInUsec();
-  }
-  for (auto& tagged_node : inline_ready) {
-    Process(tagged_node, scheduled_usec);
-  }
-}
-
 void ExecutorState::ScheduleReady(const TaggedNodeSeq& ready,
                                   TaggedNodeReadyQueue* inline_ready) {
   if (ready.empty()) return;
@@ -1838,8 +1828,8 @@ void ExecutorState::DumpState() {
 void ExecutorState::Finish() {
   mu_.lock();
   auto status = status_;
-  auto done_cb = done_cb_;
-  auto runner = runner_;
+  auto done_cb = std::move(done_cb_);
+  auto runner = std::move(runner_);
   mu_.unlock();
   delete this;
   CHECK(done_cb != nullptr);

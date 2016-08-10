@@ -35,9 +35,20 @@ config_setting(
     visibility = ["//visibility:public"],
 )
 
+config_setting(
+    name = "ios",
+    values = {
+        "crosstool_top": "//tools/osx/crosstool:crosstool",
+    },
+    visibility = ["//visibility:public"],
+)
+
 package_group(
     name = "internal",
-    packages = ["//tensorflow/..."],
+    packages = [
+        "//learning/vis/...",
+        "//tensorflow/...",
+    ],
 )
 
 sh_binary(
@@ -71,6 +82,7 @@ filegroup(
     name = "all_opensource_files",
     data = [
         ":all_files",
+        "//tensorflow/c:all_files",
         "//tensorflow/cc:all_files",
         "//tensorflow/contrib:all_files",
         "//tensorflow/contrib/copy_graph:all_files",
@@ -103,6 +115,7 @@ filegroup(
         "//tensorflow/contrib/testing:all_files",
         "//tensorflow/contrib/util:all_files",
         "//tensorflow/core:all_files",
+        "//tensorflow/core/debug:all_files",
         "//tensorflow/core/distributed_runtime:all_files",
         "//tensorflow/core/distributed_runtime/rpc:all_files",
         "//tensorflow/core/kernels:all_files",
@@ -129,6 +142,7 @@ filegroup(
         "//tensorflow/models/rnn/ptb:all_files",
         "//tensorflow/models/rnn/translate:all_files",
         "//tensorflow/python:all_files",
+        "//tensorflow/python/debug:all_files",
         "//tensorflow/python/kernel_tests:all_files",
         "//tensorflow/python/tools:all_files",
         "//tensorflow/tensorboard:all_files",

@@ -13,7 +13,9 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
+#include "tensorflow/core/framework/common_shape_fns.h"
 #include "tensorflow/core/framework/op.h"
+#include "tensorflow/core/framework/shape_inference.h"
 
 namespace tensorflow {
 
@@ -23,6 +25,7 @@ REGISTER_OP("Assert")
     .SetIsStateful()
     .Attr("T: list(type)")
     .Attr("summarize: int = 3")
+    .SetShapeFn(shape_inference::NoOutputs)
     .Doc(R"doc(
 Asserts that the given condition is true.
 
@@ -44,6 +47,7 @@ REGISTER_OP("Print")
     .Attr("message: string = ''")
     .Attr("first_n: int = -1")
     .Attr("summarize: int = 3")
+    .SetShapeFn(shape_inference::UnchangedShape)
     .Doc(R"doc(
 Prints a list of tensors.
 
@@ -88,6 +92,7 @@ REGISTER_OP("ScalarSummary")
     .Input("values: T")
     .Output("summary: string")
     .Attr("T: realnumbertype")
+    .SetShapeFn(shape_inference::ScalarShape)
     .Doc(R"doc(
 Outputs a `Summary` protocol buffer with scalar values.
 
@@ -104,6 +109,7 @@ REGISTER_OP("HistogramSummary")
     .Input("values: T")
     .Output("summary: string")
     .Attr("T: realnumbertype = DT_FLOAT")
+    .SetShapeFn(shape_inference::ScalarShape)
     .Doc(R"doc(
 Outputs a `Summary` protocol buffer with a histogram.
 
@@ -128,6 +134,7 @@ REGISTER_OP("ImageSummary")
         "bad_color: tensor = { dtype: DT_UINT8 "
         "tensor_shape: { dim { size: 4 } } "
         "int_val: 255 int_val: 0 int_val: 0 int_val: 255 }")
+    .SetShapeFn(shape_inference::ScalarShape)
     .Doc(R"doc(
 Outputs a `Summary` protocol buffer with images.
 
@@ -179,6 +186,7 @@ REGISTER_OP("AudioSummary")
     .Output("summary: string")
     .Attr("sample_rate: float")
     .Attr("max_outputs: int >= 1 = 3")
+    .SetShapeFn(shape_inference::ScalarShape)
     .Doc(R"doc(
 Outputs a `Summary` protocol buffer with audio.
 
@@ -205,6 +213,7 @@ REGISTER_OP("MergeSummary")
     .Input("inputs: N * string")
     .Output("summary: string")
     .Attr("N : int >= 1")
+    .SetShapeFn(shape_inference::ScalarShape)
     .Doc(R"doc(
 Merges summaries.
 

@@ -37,6 +37,18 @@ py_test(
 )
 
 py_test(
+    name = "load_csv_test",
+    size = "small",
+    srcs = ["python/learn/tests/load_csv_test.py"],
+    srcs_version = "PY2AND3",
+    deps = [
+        ":learn",
+        "//tensorflow:tensorflow_py",
+        "//tensorflow/python:framework_test_lib",
+    ],
+)
+
+py_test(
     name = "data_feeder_test",
     size = "small",
     srcs = ["python/learn/tests/data_feeder_test.py"],
@@ -80,6 +92,18 @@ py_test(
     name = "dataframe_test",
     size = "medium",
     srcs = ["python/learn/tests/dataframe/dataframe_test.py"],
+    srcs_version = "PY2AND3",
+    deps = [
+        ":learn",
+        "//tensorflow:tensorflow_py",
+        "//tensorflow/python:framework_test_lib",
+    ],
+)
+
+py_test(
+    name = "estimator_utils_test",
+    size = "medium",
+    srcs = ["python/learn/tests/dataframe/estimator_utils_test.py"],
     srcs_version = "PY2AND3",
     deps = [
         ":learn",
@@ -223,9 +247,9 @@ py_test(
 )
 
 py_test(
-    name = "compare_test",
+    name = "binary_transform_test",
     size = "small",
-    srcs = ["python/learn/tests/dataframe/compare_test.py"],
+    srcs = ["python/learn/tests/dataframe/binary_transform_test.py"],
     srcs_version = "PY2AND3",
     deps = [
         ":learn",
@@ -327,6 +351,18 @@ py_test(
     name = "monitors_test",
     size = "small",
     srcs = ["python/learn/tests/monitors_test.py"],
+    srcs_version = "PY2AND3",
+    deps = [
+        ":learn",
+        "//tensorflow:tensorflow_py",
+        "//tensorflow/python:framework_test_lib",
+    ],
+)
+
+py_test(
+    name = "basic_session_run_hooks_test",
+    size = "small",
+    srcs = ["python/learn/tests/basic_session_run_hooks_test.py"],
     srcs_version = "PY2AND3",
     deps = [
         ":learn",
@@ -614,24 +650,10 @@ py_test(
 )
 
 py_test(
-    name = "checkpoints_test",
-    size = "small",
-    srcs = ["python/learn/utils/checkpoints_test.py"],
-    srcs_version = "PY2AND3",
-    deps = [
-        ":learn",
-        "//tensorflow:tensorflow_py",
-        "//tensorflow/python:framework",
-        "//tensorflow/python:framework_test_lib",
-    ],
-)
-
-py_test(
     name = "graph_io_test",
     size = "small",
     srcs = ["python/learn/learn_io/graph_io_test.py"],
     srcs_version = "PY2AND3",
-    tags = ["manual"],  # http://b/29229547
     deps = [
         ":learn",
         "//tensorflow:tensorflow_py",
@@ -671,46 +693,6 @@ py_test(
 )
 
 py_test(
-    name = "wrapped_session_test",
-    size = "small",
-    srcs = ["python/learn/tests/wrapped_session_test.py"],
-    srcs_version = "PY2AND3",
-    deps = [
-        "//tensorflow:tensorflow_py",
-    ],
-)
-
-py_test(
-    name = "coordinated_session_test",
-    size = "small",
-    srcs = ["python/learn/tests/coordinated_session_test.py"],
-    srcs_version = "PY2AND3",
-    deps = [
-        "//tensorflow:tensorflow_py",
-    ],
-)
-
-py_test(
-    name = "recoverable_session_test",
-    size = "small",
-    srcs = ["python/learn/tests/recoverable_session_test.py"],
-    srcs_version = "PY2AND3",
-    deps = [
-        "//tensorflow:tensorflow_py",
-    ],
-)
-
-py_test(
-    name = "supervised_session_test",
-    size = "small",
-    srcs = ["python/learn/tests/supervised_session_test.py"],
-    srcs_version = "PY2AND3",
-    deps = [
-        "//tensorflow:tensorflow_py",
-    ],
-)
-
-py_test(
     name = "summary_writer_cache_test",
     size = "small",
     srcs = ["python/learn/tests/summary_writer_cache_test.py"],
@@ -728,29 +710,6 @@ py_binary(
     srcs_version = "PY2AND3",
     deps = [
         "//tensorflow:tensorflow_py",
-    ],
-)
-
-py_binary(
-    name = "runner_flags_test_util",
-    srcs = [
-        "python/learn/tests/runner_flags_test_util.py",
-    ],
-    srcs_version = "PY2AND3",
-    deps = [
-        ":learn",
-        "//tensorflow:tensorflow_py",
-    ],
-)
-
-sh_test(
-    name = "runner_flags_test",
-    size = "small",
-    srcs = [
-        "python/learn/tests/runner_flags_test.sh",
-    ],
-    data = [
-        ":runner_flags_test_util",
     ],
 )
 

@@ -14,13 +14,15 @@ smoothing.
 -->
 <dom-module id="vz-line-chart">
   <template>
-    <svg id="chartsvg"></svg>
     <div id="tooltip">
       <table>
         <thead>
           <tr>
             <th></th>
             <th>Name</th>
+            <template is="dom-if" if="{{smoothingEnabled}}">
+              <th>Smoothed</th>
+            </template>
             <th>Value</th>
             <th>Step</th>
             <th>Time</th>
@@ -31,6 +33,7 @@ smoothing.
         </tbody>
       </table>
     </div>
+    <svg id="chartsvg"></svg>
     <style>
       :host {
         -webkit-user-select: none;
@@ -141,8 +144,10 @@ smoothing.
         /**
          * The way to display the X values. Allows:
          * - "step" - Linear scale using the  "step" property of the datum.
-         * - "wall_time" - Temoral scale using the "wall_time" property of the
+         * - "wall_time" - Temporal scale using the "wall_time" property of the
          * datum.
+         * - "relative" - Temporal scale using the "relative" property of the
+         * datum if it is present or calculating from "wall_time" if it isn't.
          */
         xType: {
           type: String,
@@ -158,6 +163,10 @@ smoothing.
         _seriesDataCache: {
           type: Object,
           value: function() { return {} }
+        },
+        _makeChartAsyncCallbackId: {
+          type: Number,
+          value: null
         }
       },
       observers: [
@@ -211,21 +220,25 @@ smoothing.
       detached: function() {
         this._attached = false;
       },
+      ready: function() {
+        this.scopeSubtree(this.$.tooltip, true);
+        this.scopeSubtree(this.$.chartsvg, true);
+      },
       _makeChart: function(xType, colorScale, _attached) {
-        if(!this._attached) {
-          return;
+        if (this._makeChartAsyncHandle === null) {
+          this.cancelAsync(this._makeChartAsyncCallbackId);
         }
 
-        if (this._chart) this._chart.destroy();
-        var tooltip = d3.select(this.$.tooltip);
-        this.scopeSubtree(this.$.tooltip, true);
-        var chart = new VZ.LineChart(xType, colorScale, tooltip);
-        var svg = d3.select(this.$.chartsvg);
-        this.async(function() {
+        this._makeChartAsyncHandle = this.async(function() {
+          this._makeChartAsyncCallbackId = null;
+          if (!this._attached) return;
+          if (this._chart) this._chart.destroy();
+          var tooltip = d3.select(this.$.tooltip);
+          var chart = new VZ.LineChart(xType, colorScale, tooltip);
+          var svg = d3.select(this.$.chartsvg);
           chart.renderTo(svg);
-          this.scopeSubtree(this.$.chartsvg, true);
           this._chart = chart;
-        }, 350);
+        }.bind(this), 350);
       },
       _reloadFromCache: function() {
         if(this._chart) {

@@ -22,6 +22,7 @@ import inspect
 
 import six
 
+from tensorflow.contrib import losses
 from tensorflow.contrib import metrics as metrics_lib
 from tensorflow.python.framework import dtypes
 from tensorflow.python.framework import ops
@@ -29,7 +30,6 @@ from tensorflow.python.ops import array_ops
 from tensorflow.python.ops import logging_ops
 from tensorflow.python.ops import math_ops
 from tensorflow.python.ops import nn
-from tensorflow.python.ops import nn_ops
 
 
 def regression_target(label_name=None,
@@ -70,7 +70,7 @@ def multi_class_target(n_classes, label_name=None, weight_column_name=None):
       will be multiplied by the loss of the example.
 
   Returns:
-    An instance of _TargetColumn
+    An instance of _MultiClassTargetColumn.
 
   Raises:
     ValueError: if n_classes is < 2
@@ -107,6 +107,13 @@ def binary_svm_target(label_name=None, weight_column_name=None):
                                 weight_column_name=weight_column_name)
 
 
+class ProblemType(object):
+  UNSPECIFIED = 0
+  CLASSIFICATION = 1
+  LINEAR_REGRESSION = 2
+  LOGISTIC_REGRESSION = 3
+
+
 class _TargetColumn(object):
   """_TargetColumn is the abstraction for a single head in a model.
 
@@ -124,7 +131,7 @@ class _TargetColumn(object):
   """
 
   def __init__(self, loss_fn, num_label_columns, label_name,
-               weight_column_name):
+               weight_column_name, problem_type):
     if not loss_fn:
       raise ValueError("loss_fn must be provided")
     if num_label_columns is None:  # n_classes can be 0
@@ -134,6 +141,7 @@ class _TargetColumn(object):
     self._num_label_columns = num_label_columns
     self._label_name = label_name
     self._weight_column_name = weight_column_name
+    self._problem_type = problem_type
 
   def logits_to_predictions(self, logits, proba=False):
     # Abstrat, Subclasses must implement.
@@ -162,6 +170,10 @@ class _TargetColumn(object):
       return array_ops.reshape(
           math_ops.to_float(features[self._weight_column_name]),
           shape=(-1,))
+
+  @property
+  def problem_type(self):
+    return self._problem_type
 
   def loss(self, logits, target, features):
     """Returns loss tensor for this head.
@@ -200,7 +212,8 @@ class _RegressionTargetColumn(_TargetColumn):
         loss_fn=loss_fn,
         num_label_columns=target_dimension,
         label_name=label_name,
-        weight_column_name=weight_column_name)
+        weight_column_name=weight_column_name,
+        problem_type=ProblemType.LINEAR_REGRESSION)
 
   def logits_to_predictions(self, logits, proba=False):
     if self.num_label_columns == 1:
@@ -228,7 +241,8 @@ class _MultiClassTargetColumn(_TargetColumn):
         loss_fn=loss_fn,
         num_label_columns=1 if n_classes == 2 else n_classes,
         label_name=label_name,
-        weight_column_name=weight_column_name)
+        weight_column_name=weight_column_name,
+        problem_type=ProblemType.CLASSIFICATION)
 
   def logits_to_predictions(self, logits, proba=False):
     if self.num_label_columns == 1:
@@ -297,8 +311,17 @@ class _BinarySvmTargetColumn(_MultiClassTargetColumn):
   """_TargetColumn for binary classification using SVMs."""
 
   def __init__(self, label_name, weight_column_name):
+    def loss_fn(logits, target):
+      check_shape_op = logging_ops.Assert(
+          math_ops.less_equal(array_ops.rank(target), 2),
+          ["target's shape should be either [batch_size, 1] or [batch_size]"])
+      with ops.control_dependencies([check_shape_op]):
+        target = array_ops.reshape(
+            target, shape=[array_ops.shape(target)[0], 1])
+      return losses.hinge_loss(logits, target)
+
     super(_BinarySvmTargetColumn, self).__init__(
-        loss_fn=_binary_hinge_loss,
+        loss_fn=loss_fn,
         n_classes=2,
         label_name=label_name,
         weight_column_name=weight_column_name)
@@ -328,22 +351,6 @@ def _log_loss_with_two_classes(logits, target):
     target = array_ops.expand_dims(target, dim=[1])
   loss_vec = nn.sigmoid_cross_entropy_with_logits(logits,
                                                   math_ops.to_float(target))
-  return loss_vec
-
-
-# TODO(sibyl-vie3Poto): Move this to contrib/losses/python/losses/loss_ops.py.
-def _binary_hinge_loss(logits, target):
-  """Method that returns the loss vector for binary hinge loss."""
-  check_shape_op = logging_ops.Assert(
-      math_ops.less_equal(
-          array_ops.rank(target), 2),
-      ["target's shape should be either [batch_size, 1] or [batch_size]"])
-  with ops.control_dependencies([check_shape_op]):
-    target = array_ops.reshape(target, shape=[array_ops.shape(target)[0], 1])
-  # First need to convert binary labels to -1/1 labels (as floats).
-  all_ones = array_ops.ones_like(logits)
-  labels = math_ops.sub(2 * math_ops.to_float(target), all_ones)
-  loss_vec = nn_ops.relu(math_ops.sub(all_ones, math_ops.mul(labels, logits)))
   return loss_vec
 
 

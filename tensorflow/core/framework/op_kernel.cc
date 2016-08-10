@@ -93,6 +93,10 @@ OpKernel::OpKernel(OpKernelConstruction* context)
                                    &output_name_map_));
   OP_REQUIRES_OK(context, CheckOpDeprecation(context->op_def(),
                                              context->graph_def_version()));
+
+  // Kernels executing on GPU tie very few resources on the CPU where the
+  // scheduler runs: we consider them as inexpensive.
+  expensive_ = context->device_type() != DeviceType(DEVICE_GPU);
 }
 
 OpKernel::~OpKernel() {}
@@ -754,6 +758,8 @@ Status FindKernelDef(DeviceType device_type, const NodeDef& node_def,
       errors::AppendToMessage(
           &s, " (OpKernel was found, but attributes didn't match)");
     }
+    errors::AppendToMessage(&s, ".  Registered:",
+                            KernelsRegisteredForOp(node_def.op()));
     return s;
   }
   if (def != nullptr) *def = &reg->def;
@@ -792,6 +798,27 @@ void LogAllRegisteredKernels() {
     const KernelDef& kernel_def(key_registration.second.def);
     LOG(INFO) << "OpKernel ('" << ProtoShortDebugString(kernel_def) << "')";
   }
+}
+
+string KernelsRegisteredForOp(StringPiece op_name) {
+  string ret;
+  for (const auto& key_registration : *GlobalKernelRegistryTyped()) {
+    const KernelDef& kernel_def(key_registration.second.def);
+    if (kernel_def.op() == op_name) {
+      strings::StrAppend(&ret, "  device='", kernel_def.device_type(), "'");
+      if (!kernel_def.label().empty()) {
+        strings::StrAppend(&ret, "; label='", kernel_def.label(), "'");
+      }
+      for (int i = 0; i < kernel_def.constraint_size(); ++i) {
+        strings::StrAppend(
+            &ret, "; ", kernel_def.constraint(i).name(), " in ",
+            SummarizeAttrValue(kernel_def.constraint(i).allowed_values()));
+      }
+      strings::StrAppend(&ret, "\n");
+    }
+  }
+  if (ret.empty()) return "  <no registered kernels>\n";
+  return ret;
 }
 
 std::unique_ptr<OpKernel> CreateOpKernel(
@@ -836,6 +863,8 @@ Status CreateOpKernel(DeviceType device_type, DeviceBase* device,
       errors::AppendToMessage(
           &s, " (OpKernel was found, but attributes didn't match)");
     }
+    errors::AppendToMessage(&s, ".  Registered:",
+                            KernelsRegisteredForOp(node_def.op()));
     return s;
   }
 
