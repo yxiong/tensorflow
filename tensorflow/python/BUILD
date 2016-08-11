@@ -93,6 +93,7 @@ cc_library(
     ],
     deps = [
         ":numpy_lib",
+        "//tensorflow/contrib/quantization/kernels:quantized_ops",
         "//tensorflow/core:framework",
         "//tensorflow/core:lib",
         "//tensorflow/core:script_ops_op_lib",
