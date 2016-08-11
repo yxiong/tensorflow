@@ -127,6 +127,8 @@ INCLUDES := \
 -I. \
 -I$(MAKEFILE_DIR)/downloads/ \
 -I$(MAKEFILE_DIR)/downloads/eigen-eigen-$(EIGEN_VERSION) \
+-I$(MAKEFILE_DIR)/downloads/gemmlowp \
+-I$(MAKEFILE_DIR)/../quantization/kernels \
 -I$(PROTOGENDIR) \
 -I$(PBTGENDIR)
 ifeq ($(HAS_GEN_HOST_PROTOC),true)

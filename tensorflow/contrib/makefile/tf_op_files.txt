@@ -1,3 +1,17 @@
+tensorflow/contrib/quantization/kernels/dequantize_op.cc
+tensorflow/contrib/quantization/kernels/quantization_utils.cc
+tensorflow/contrib/quantization/kernels/quantize_down_and_shrink_range.cc
+tensorflow/contrib/quantization/kernels/quantize_op.cc
+tensorflow/contrib/quantization/kernels/quantized_activation_ops.cc
+tensorflow/contrib/quantization/kernels/quantized_batch_norm_op.cc
+tensorflow/contrib/quantization/kernels/quantized_bias_add_op.cc
+tensorflow/contrib/quantization/kernels/quantized_concat_op.cc
+tensorflow/contrib/quantization/kernels/quantized_conv_ops.cc
+tensorflow/contrib/quantization/kernels/quantized_matmul_op.cc
+tensorflow/contrib/quantization/kernels/quantized_pooling_ops.cc
+tensorflow/contrib/quantization/ops/array_ops.cc
+tensorflow/contrib/quantization/ops/math_ops.cc
+tensorflow/contrib/quantization/ops/nn_ops.cc
 tensorflow/core/kernels/xent_op.cc
 tensorflow/core/kernels/where_op.cc
 tensorflow/core/kernels/variable_ops.cc
