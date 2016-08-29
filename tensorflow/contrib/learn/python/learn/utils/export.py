@@ -20,6 +20,7 @@ from __future__ import division
 from __future__ import print_function
 
 from tensorflow.contrib import layers
+from tensorflow.contrib.framework import deprecated
 from tensorflow.contrib.framework.python.ops import variables as contrib_variables
 from tensorflow.contrib.session_bundle import exporter
 from tensorflow.contrib.session_bundle import gc
@@ -72,7 +73,9 @@ def _export_graph(graph, saver, checkpoint_path, export_dir,
           variables.initialize_local_variables(),
           data_flow_ops.initialize_all_tables()),
                   default_graph_signature=default_graph_signature,
-                  named_graph_signatures=named_graph_signatures)
+                  named_graph_signatures=named_graph_signatures,
+                  assets_collection=ops.get_collection(
+                      ops.GraphKeys.ASSET_FILEPATHS))
       export.export(export_dir, contrib_variables.get_global_step(), session,
                     exports_to_keep=exports_to_keep)
 
@@ -170,26 +173,29 @@ def _default_input_fn(estimator, examples):
   return estimator._get_feature_ops_from_example(examples)
 
 
+@deprecated('2016-09-23', 'Please use BaseEstimator.export')
 def export_estimator(estimator,
                      export_dir,
                      signature_fn=None,
                      input_fn=_default_input_fn,
                      default_batch_size=1,
                      exports_to_keep=None):
-  """Exports inference graph into given dir.
+  """Deprecated, please use BaseEstimator.export."""
+  _export_estimator(estimator=estimator,
+                    export_dir=export_dir,
+                    signature_fn=signature_fn,
+                    input_fn=input_fn,
+                    default_batch_size=default_batch_size,
+                    exports_to_keep=exports_to_keep)
 
-  Args:
-    estimator: Estimator to export
-    export_dir: A string containing a directory to write the exported graph
-      and checkpoints.
-    signature_fn: Function that returns a default signature and a named
-      signature map, given `Tensor` of `Example` strings, `dict` of `Tensor`s
-      for features and `Tensor` or `dict` of `Tensor`s for predictions.
-    input_fn: Function that given `Tensor` of `Example` strings, parses it into
-      features that are then passed to the model.
-    default_batch_size: Default batch size of the `Example` placeholder.
-    exports_to_keep: Number of exports to keep.
-  """
+
+def _export_estimator(estimator,
+                      export_dir,
+                      signature_fn,
+                      input_fn,
+                      default_batch_size,
+                      exports_to_keep):
+  input_fn = input_fn or _default_input_fn
   checkpoint_path = tf_saver.latest_checkpoint(estimator._model_dir)
   with ops.Graph().as_default() as g:
     contrib_variables.create_global_step(g)

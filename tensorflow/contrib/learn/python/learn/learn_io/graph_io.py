@@ -74,8 +74,7 @@ def read_batch_examples(file_pattern, batch_size, reader,
     name: Name of resulting op.
 
   Returns:
-    String `Tensor` of batched `Example` proto. If `keep_keys` is True, then
-    returns tuple of string `Tensor`s, where first value is the key.
+    String `Tensor` of batched `Example` proto.
 
   Raises:
     ValueError: for invalid inputs.
@@ -127,8 +126,9 @@ def read_keyed_batch_examples(
     name: Name of resulting op.
 
   Returns:
-    String `Tensor` of batched `Example` proto. If `keep_keys` is True, then
-    returns tuple of string `Tensor`s, where first value is the key.
+    Returns tuple of:
+    - `Tensor` of string keys.
+    - String `Tensor` of batched `Example` proto.
 
   Raises:
     ValueError: for invalid inputs.
@@ -272,8 +272,9 @@ def read_keyed_batch_features(file_pattern,
     name: Name of resulting op.
 
   Returns:
-    A dict of `Tensor` or `SparseTensor` objects for each in `features`.
-    If `keep_keys` is `True`, returns tuple of string `Tensor` and above dict.
+    Returns tuple of:
+    - `Tensor` of string keys.
+    - A dict of `Tensor` or `SparseTensor` objects for each in `features`.
 
   Raises:
     ValueError: for invalid inputs.
@@ -355,8 +356,8 @@ def read_keyed_batch_features(file_pattern,
 
 def read_batch_features(file_pattern, batch_size, features, reader,
                         randomize_input=True, num_epochs=None,
-                        queue_capacity=10000, reader_num_threads=1,
-                        parser_num_threads=1, name=None):
+                        queue_capacity=10000, feature_queue_capacity=100,
+                        reader_num_threads=1, parser_num_threads=1, name=None):
   """Adds operations to read, queue, batch and parse `Example` protos.
 
   Given file pattern (or list of files), will setup a queue for file names,
@@ -383,6 +384,8 @@ def read_batch_features(file_pattern, batch_size, features, reader,
       creates a variable that must be initialized, so call
       tf.initialize_local_variables() as shown in the tests.
     queue_capacity: Capacity for input queue.
+    feature_queue_capacity: Capacity of the parsed features queue. Set this
+      value to a small number, for example 5 if the parsed features are large.
     reader_num_threads: The number of threads to read examples.
     parser_num_threads: The number of threads to parse examples.
       records to read at once
@@ -390,7 +393,6 @@ def read_batch_features(file_pattern, batch_size, features, reader,
 
   Returns:
     A dict of `Tensor` or `SparseTensor` objects for each in `features`.
-    If `keep_keys` is `True`, returns tuple of string `Tensor` and above dict.
 
   Raises:
     ValueError: for invalid inputs.
@@ -398,7 +400,9 @@ def read_batch_features(file_pattern, batch_size, features, reader,
   _, features = read_keyed_batch_features(
       file_pattern, batch_size, features, reader,
       randomize_input=randomize_input, num_epochs=num_epochs,
-      queue_capacity=queue_capacity, reader_num_threads=reader_num_threads,
+      queue_capacity=queue_capacity,
+      feature_queue_capacity=feature_queue_capacity,
+      reader_num_threads=reader_num_threads,
       parser_num_threads=parser_num_threads, name=name)
   return features
 

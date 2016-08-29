@@ -184,7 +184,7 @@ applies gradients.
 
 ### Gating Gradients
 
-Both `minimize()` and `compute_gradients()` accept a `gate_gradient` argument
+Both `minimize()` and `compute_gradients()` accept a `gate_gradients` argument
 that controls the degree of parallelism during the application of the
 gradients.
 
@@ -258,7 +258,3 @@ Use `get_slot_names()` to get the list of slot names created by the
 - - -
 
 #### `tf.train.Optimizer.get_name()` {#Optimizer.get_name}
-
-
-
-

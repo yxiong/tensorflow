@@ -143,9 +143,6 @@ def shape_internal(input, name=None, optimize=True):
     else:
       input_tensor = ops.convert_to_tensor(input)
       input_shape = input_tensor.get_shape()
-      # Static shape inference can be incorrect when loops are involved: disable
-      # shape optimization in this case to avoid generating invalid constants.
-      optimize &= input_tensor.graph._get_control_flow_context() is None
       if optimize and input_shape.is_fully_defined():
         return constant(input_shape.as_list(), dtypes.int32, name=name)
       return gen_array_ops.shape(input, name=name)
@@ -192,9 +189,6 @@ def size_internal(input, name=None, optimize=True):
     else:
       input_tensor = ops.convert_to_tensor(input)
       input_shape = input_tensor.get_shape()
-      # Static shape inference can be incorrect when loops are involved: disable
-      # shape optimization in this case to avoid generating invalid constants.
-      optimize &= input_tensor.graph._get_control_flow_context() is None
       if optimize and input_shape.is_fully_defined():
         return constant(input_shape.num_elements(), dtypes.int32, name=name)
       return gen_array_ops.size(input, name=name)
@@ -244,9 +238,6 @@ def rank_internal(input, name=None, optimize=True):
     else:
       input_tensor = ops.convert_to_tensor(input)
       input_shape = input_tensor.get_shape()
-      # Static shape inference can be incorrect when loops are involved: disable
-      # shape optimization in this case to avoid generating invalid constants.
-      optimize &= input_tensor.graph._get_control_flow_context() is None
       if optimize and input_shape.ndims is not None:
         return constant(input_shape.ndims, dtypes.int32, name=name)
       return gen_array_ops.rank(input, name=name)
@@ -254,7 +245,7 @@ def rank_internal(input, name=None, optimize=True):
 
 # DEPRECATED use init_ops.zeros_initializer
 # TODO(irving) Move it to init_ops.py
-def zeros_initializer(shape, dtype=dtypes.float32):
+def zeros_initializer(shape, dtype=dtypes.float32, partition_info=None):
   """An adaptor for zeros() to match the Initializer spec."""
   return zeros(shape, dtype)
 
@@ -315,11 +306,6 @@ def _SliceHelper(tensor, slice_spec):
       strides.append(1)
       new_axis_mask |= (1 << index)
     else:
-      try:
-        s = int(s)
-      except TypeError:
-        raise TypeError("Bad slice index %s of type %s" % (s, type(s)))
-
       begin.append(s)
       end.append(s + 1)
       strides.append(1)
@@ -330,11 +316,10 @@ def _SliceHelper(tensor, slice_spec):
   # correct graph
   with ops.name_scope(None, "strided_slice",
                       [tensor] + begin + end + strides) as name:
-    begin_pack, end_pack, strides_pack = pack(begin), pack(end), pack(strides)
     return strided_slice(tensor,
-                         begin_pack,
-                         end_pack,
-                         strides_pack,
+                         pack(begin),
+                         pack(end),
+                         pack(strides),
                          begin_mask=begin_mask,
                          end_mask=end_mask,
                          shrink_axis_mask=shrink_axis_mask,
@@ -419,7 +404,7 @@ def strided_slice(input_,
 
   For the ith spec,
   `begin_mask`, `end_mask`, `ellipsis_mask`, `new_axis_mask`,
-  and `shrink_axis_mask` will have the ith bit corrsponding to
+  and `shrink_axis_mask` will have the ith bit corresponding to
   the ith spec.
 
   If the ith bit of `begin_mask` is non-zero, `begin[i]` is ignored and
@@ -769,7 +754,9 @@ def _PackShape(op):
     input_shape = input_shape.merge_with(inp.get_shape())
 
   input_shape = input_shape.as_list()
-  input_shape.insert(op.get_attr("axis"), len(op.inputs))
+  axis = op.get_attr("axis")
+  if axis < 0: axis += len(input_shape) + 1
+  input_shape.insert(axis, len(op.inputs))
   return [tensor_shape.TensorShape(input_shape)]
 
 
@@ -1125,14 +1112,16 @@ def zeros(shape, dtype=dtypes.float32, name=None):
   Returns:
     A `Tensor` with all elements set to zero.
   """
+  dtype = dtypes.as_dtype(dtype).base_dtype
   with ops.name_scope(name, "zeros", [shape]) as name:
+    zero = False if dtype == dtypes.bool else 0
     try:
       shape = tensor_shape.as_shape(shape)
-      output = constant(0, shape=shape, dtype=dtype, name=name)
+      output = constant(zero, shape=shape, dtype=dtype, name=name)
     except (TypeError, ValueError):
       shape = ops.convert_to_tensor(shape, dtype=dtypes.int32, name="shape")
-      output = fill(shape, constant(0, dtype=dtype), name=name)
-  assert output.dtype.base_dtype == dtypes.as_dtype(dtype).base_dtype
+      output = fill(shape, constant(zero, dtype=dtype), name=name)
+  assert output.dtype.base_dtype == dtype
   return output
 
 
@@ -1188,7 +1177,8 @@ def ones_like(tensor, dtype=None, name=None, optimize=True):
   Args:
     tensor: A `Tensor`.
     dtype: A type for the returned `Tensor`. Must be `float32`, `float64`,
-    `int8`, `int16`, `int32`, `int64`, `uint8`, `complex64`, or `complex128`.
+      `int8`, `int16`, `int32`, `int64`, `uint8`, `complex64`, `complex128` or
+      `bool`.
     name: A name for the operation (optional).
     optimize: if true, attempt to statically determine the shape of 'tensor'
     and encode it as a constant.
@@ -1226,14 +1216,16 @@ def ones(shape, dtype=dtypes.float32, name=None):
   Returns:
     A `Tensor` with all elements set to 1.
   """
+  dtype = dtypes.as_dtype(dtype).base_dtype
   with ops.name_scope(name, "ones", [shape]) as name:
+    one = True if dtype == dtypes.bool else 1
     try:
       shape = tensor_shape.as_shape(shape)
-      output = constant(1, shape=shape, dtype=dtype, name=name)
+      output = constant(one, shape=shape, dtype=dtype, name=name)
     except (TypeError, ValueError):
       shape = ops.convert_to_tensor(shape, dtype=dtypes.int32, name="shape")
-      output = fill(shape, constant(1, dtype=dtype), name=name)
-  assert output.dtype.base_dtype == dtypes.as_dtype(dtype).base_dtype
+      output = fill(shape, constant(one, dtype=dtype), name=name)
+  assert output.dtype.base_dtype == dtype
   return output
 
 
@@ -1321,15 +1313,17 @@ def sparse_placeholder(dtype, shape=None, name=None):
   """
   if shape is None:
     shape = placeholder(
-        dtypes.int64, name=(name + "/shape") if name is not None else None)
+        dtypes.int64, shape=[None],
+        name=(name + "/shape") if name is not None else None)
   else:
     shape = ops.convert_to_tensor(
         shape, name=(name + "/shape") if name is not None else None)
   return ops.SparseTensor(
       values=placeholder(
-          dtype, name=(name + "/values") if name is not None else None),
+          dtype, shape=[None],
+          name=(name + "/values") if name is not None else None),
       indices=placeholder(
-          dtypes.int64,
+          dtypes.int64, shape=[None, None],
           name=(name + "/indices") if name is not None else None),
       shape=shape
   )
@@ -1417,11 +1411,14 @@ def meshgrid(*args, **kwargs):
   Examples:
 
   Calling `X, Y = meshgrid(x, y)` with the tensors
+
   ```prettyprint
     x = [1, 2, 3]
     y = [4, 5, 6]
   ```
+
   results in
+
   ```prettyprint
     X = [[1, 1, 1],
          [2, 2, 2],

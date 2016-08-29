@@ -26,15 +26,25 @@ reparameterized distributions; it will also return None if the value type is
 ##### Args:
 
 
-*  <b>`dist_cls`</b>: a class deriving from `BaseDistribution`.
+*  <b>`dist_cls`</b>: a `Distribution` class.
 *  <b>`name`</b>: a name for this `DistributionTensor` and its ops.
 *  <b>`dist_value_type`</b>: a `_StochasticValueType`, which will determine what the
       `value` of this `DistributionTensor` will be. If not provided, the
       value type set with the `value_type` context manager will be used.
-*  <b>`loss_fn`</b>: callable that takes `(dt, dt.value(), influenced_losses)`, where
-      `dt` is this `DistributionTensor`, and returns a `Tensor` loss.
+*  <b>`loss_fn`</b>: callable that takes `(dt, dt.value(), influenced_loss)`, where
+      `dt` is this `DistributionTensor`, and returns a `Tensor` loss. By
+      default, `loss_fn` is the `score_function`, or more precisely, the
+      integral of the score function, such that when the gradient is taken,
+      the score function results. See the `stochastic_gradient_estimators`
+      module for additional loss functions and baselines.
 *  <b>`**dist_args`</b>: keyword arguments to be passed through to `dist_cls` on
       construction.
+
+##### Raises:
+
+
+*  <b>`TypeError`</b>: if `dist_cls` is not a `Distribution`.
+*  <b>`TypeError`</b>: if `loss_fn` is not `callable`.
 
 
 - - -
@@ -81,7 +91,7 @@ reparameterized distributions; it will also return None if the value type is
 
 - - -
 
-#### `tf.contrib.bayesflow.stochastic_graph.DistributionTensor.loss(final_losses, name='Loss')` {#DistributionTensor.loss}
+#### `tf.contrib.bayesflow.stochastic_graph.DistributionTensor.loss(final_loss, name='Loss')` {#DistributionTensor.loss}
 
 
 

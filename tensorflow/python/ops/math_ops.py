@@ -67,6 +67,7 @@ mathematical functions to your graph.
 @@igammac
 @@zeta
 @@polygamma
+@@betainc
 
 ## Matrix Math Functions
 
@@ -150,6 +151,7 @@ common math computations that reduce various dimensions of a tensor.
 @@reduce_mean
 @@reduce_all
 @@reduce_any
+@@reduce_logsumexp
 
 @@accumulate_n
 
@@ -218,7 +220,6 @@ from __future__ import division
 from __future__ import print_function
 
 import numpy as np
-import six.moves
 
 from tensorflow.python.framework import common_shapes
 from tensorflow.python.framework import constant_op
@@ -1251,6 +1252,56 @@ def reduce_any(input_tensor, reduction_indices=None, keep_dims=False,
                            keep_dims, name=name)
 
 
+def reduce_logsumexp(input_tensor, reduction_indices=None, keep_dims=False,
+                     name=None):
+  """Computes log(sum(exp(elements across dimensions of a tensor))).
+
+  Reduces `input_tensor` along the dimensions given in `reduction_indices`.
+  Unless `keep_dims` is true, the rank of the tensor is reduced by 1 for each
+  entry in `reduction_indices`. If `keep_dims` is true, the reduced dimensions
+  are retained with length 1.
+
+  If `reduction_indices` has no entries, all dimensions are reduced, and a
+  tensor with a single element is returned.
+
+  This funciton is more numerically stable than log(sum(exp(input))). It avoids
+  overflows caused by taking the exp of large inputs and underflows caused by
+  taking the log of small inputs.
+
+  For example:
+
+  ```python
+  # 'x' is [[0, 0, 0]]
+  #         [0, 0, 0]]
+  tf.reduce_logsumexp(x) ==> log(6)
+  tf.reduce_logsumexp(x, 0) ==> [log(2), log(2), log(2)]
+  tf.reduce_logsumexp(x, 1) ==> [log(3), log(3)]
+  tf.reduce_logsumexp(x, 1, keep_dims=True) ==> [[log(3)], [log(3)]]
+  tf.reduce_logsumexp(x, [0, 1]) ==> log(6)
+  ```
+
+  Args:
+    input_tensor: The tensor to reduce. Should have numeric type.
+    reduction_indices: The dimensions to reduce. If `None` (the defaut),
+      reduces all dimensions.
+    keep_dims: If true, retains reduced dimensions with length 1.
+    name: A name for the operation (optional).
+
+  Returns:
+    The reduced tensor.
+  """
+  with ops.name_scope(name, "ReduceLogSumExp", [input_tensor]) as name:
+    my_max = array_ops.stop_gradient(
+        reduce_max(input_tensor, reduction_indices, keep_dims=True))
+    result = gen_math_ops.log(reduce_sum(
+        gen_math_ops.exp(input_tensor - my_max),
+        reduction_indices,
+        keep_dims=True)) + my_max
+    if not keep_dims:
+      result = array_ops.squeeze(result, reduction_indices)
+    return result
+
+
 def trace(x, name=None):
   """ Compute the trace of a tensor `x`.
 
@@ -1355,8 +1406,8 @@ def matmul(a, b,
 sparse_matmul = gen_math_ops._sparse_mat_mul
 batch_matmul = gen_math_ops._batch_mat_mul
 
-ops.RegisterShape("MatMul")(common_shapes.matmul_shape)
-ops.RegisterShape("SparseMatMul")(common_shapes.matmul_shape)
+ops.RegisterShape("MatMul")(common_shapes.call_cpp_shape_fn)
+ops.RegisterShape("SparseMatMul")(common_shapes.call_cpp_shape_fn)
 
 
 @ops.RegisterStatistics("MatMul", "flops")
@@ -1763,47 +1814,24 @@ ops.RegisterShape("Cumprod")(common_shapes.unchanged_shape)
 @ops.RegisterShape("SquaredDifference")
 def _BroadcastShape(op):
   """Common shape function for binary operators that broadcast their inputs."""
-  shape_x = op.inputs[0].get_shape()
-  shape_y = op.inputs[1].get_shape()
-  if shape_x.ndims is None or shape_y.ndims is None:
-    return [tensor_shape.unknown_shape()]
+  return [common_shapes.broadcast_shape(
+      op.inputs[0].get_shape(),
+      op.inputs[1].get_shape())]
 
-  # To compute the broadcasted dimensions, we zip together shape_x and shape_y,
-  # and pad with 1 to make them the same length.
-  broadcasted_dims = reversed(list(six.moves.zip_longest(
-      reversed(shape_x.dims),
-      reversed(shape_y.dims),
-      fillvalue=tensor_shape.Dimension(1))))
-  # Next we combine the dimensions according to the numpy broadcasting rules.
-  # http://docs.scipy.org/doc/numpy/user/basics.broadcasting.html
-  return_dims = []
-  for (dim_x, dim_y) in broadcasted_dims:
-    if dim_x.value is None or dim_y.value is None:
-      # One or both dimensions is unknown. If either dimension is greater than
-      # 1, we assume that the program is correct, and the other dimension will
-      # be broadcast to match it.
-      # TODO(mrry): If we eliminate the shape checks in C++, we must still
-      # assert that the unknown dim is either 1 or the same as the known dim.
-      if dim_x.value is not None and dim_x.value > 1:
-        return_dims.append(dim_x)
-      elif dim_y.value is not None and dim_y.value > 1:
-        return_dims.append(dim_y)
-      else:
-        return_dims.append(None)
-    elif dim_x.value == 1:
-      # We will broadcast dim_x to dim_y.
-      return_dims.append(dim_y)
-    elif dim_y.value == 1:
-      # We will broadcast dim_y to dim_x.
-      return_dims.append(dim_x)
-    elif dim_x.value == dim_y.value:
-      # The dimensions are compatible, so output is the same size in that
-      # dimension.
-      return_dims.append(dim_x.merge_with(dim_y))
-    else:
-      raise ValueError("Incompatible shapes for broadcasting: %s and %s"
-                       % (shape_x, shape_y))
-  return [tensor_shape.TensorShape(return_dims)]
+
+@ops.RegisterShape("Betainc")
+def _BetaincOpShape(op):  # pylint: disable=invalid-name
+  """Shape function for BetaincOp."""
+  a_shape = op.inputs[0].get_shape()
+  b_shape = op.inputs[1].get_shape()
+  x_shape = op.inputs[2].get_shape()
+  merged_shape = tensor_shape.TensorShape(None)
+  for shape in (a_shape, b_shape, x_shape):
+    if shape.ndims != 0:
+      merged_shape = merged_shape.merge_with(shape)
+  # Scalars get broadcasted; non-scalar shapes must all match.
+  # Output will be the merged non-scalar shape, if any.
+  return [merged_shape if merged_shape.ndims is not None else a_shape]
 
 
 @ops.RegisterShape("SparseDenseCwiseMul")
@@ -1886,6 +1914,7 @@ def _ArgOpShape(op):
 def _ReductionShape(op):
   """Common shape function for reduction ops."""
   input_shape = op.inputs[0].get_shape()
+  op.inputs[1].get_shape().with_rank_at_most(1)
   reduction_indices = tensor_util.constant_value(op.inputs[1])
   keep_dims = op.get_attr("keep_dims")
   if reduction_indices is None or input_shape.ndims is None:

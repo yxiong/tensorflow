@@ -18,8 +18,11 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+from tensorflow.contrib.framework.python.framework import checkpoint_utils
 from tensorflow.contrib.framework.python.ops import variables as contrib_variables
+from tensorflow.contrib.layers.python.layers import embedding_ops
 from tensorflow.contrib.layers.python.layers import feature_column as fc
+from tensorflow.python.framework import dtypes
 from tensorflow.python.framework import ops
 from tensorflow.python.ops import array_ops
 from tensorflow.python.ops import init_ops
@@ -79,7 +82,7 @@ def input_from_feature_columns(columns_to_tensors,
     weight_collections: List of graph collections to which weights are added.
     trainable: If `True` also add variables to the graph collection
       `GraphKeys.TRAINABLE_VARIABLES` (see tf.Variable).
-    scope: Optional scope for variable_op_scope.
+    scope: Optional scope for variable_scope.
 
   Returns:
     A Tensor which can be consumed by hidden layers in the neural network.
@@ -88,8 +91,9 @@ def input_from_feature_columns(columns_to_tensors,
     ValueError: if FeatureColumn cannot be consumed by a neural network.
   """
   check_feature_columns(feature_columns)
-  with variable_scope.variable_op_scope(columns_to_tensors.values(), scope,
-                                        'input_from_feature_columns'):
+  with variable_scope.variable_scope(scope,
+                                     default_name='input_from_feature_columns',
+                                     values=columns_to_tensors.values()):
     output_tensors = []
     transformer = _Transformer(columns_to_tensors)
     if weight_collections:
@@ -97,8 +101,9 @@ def input_from_feature_columns(columns_to_tensors,
                                     [ops.GraphKeys.VARIABLES]))
 
     for column in sorted(set(feature_columns), key=lambda x: x.key):
-      with variable_scope.variable_op_scope(
-          columns_to_tensors.values(), None, column.name):
+      with variable_scope.variable_scope(None,
+                                         default_name=column.name,
+                                         values=columns_to_tensors.values()):
         try:
           transformed_tensor = transformer.transform(column)
           output_tensors.append(column.to_dnn_input_layer(
@@ -107,6 +112,60 @@ def input_from_feature_columns(columns_to_tensors,
           raise ValueError('Error creating input layer for column: {}.\n'
                            '{}'.format(column.name, e))
     return array_ops.concat(1, output_tensors)
+
+
+def _create_embedding_lookup(column,
+                             columns_to_tensors,
+                             embedding_lookup_arguments,
+                             num_outputs,
+                             trainable,
+                             weight_collections):
+  """Creates variables and returns predictions for linear weights in a model.
+
+  Args:
+   column: the column we're working on.
+   columns_to_tensors: a map from column name to tensors.
+   embedding_lookup_arguments: arguments for embedding lookup.
+   num_outputs: how many outputs.
+   trainable: whether the variable we create is trainable.
+   weight_collections: weights will be placed here.
+
+  Returns:
+  variables: the created embeddings.
+  predictions: the computed predictions.
+  """
+  with variable_scope.variable_scope(
+      None, default_name=column.name, values=columns_to_tensors.values()):
+    variable = contrib_variables.model_variable(
+        name='weights',
+        shape=[embedding_lookup_arguments.vocab_size, num_outputs],
+        dtype=dtypes.float32,
+        initializer=embedding_lookup_arguments.initializer,
+        trainable=trainable,
+        collections=weight_collections)
+    if isinstance(variable, variables.Variable):
+      variable = [variable]
+    else:
+      variable = variable._get_variable_list()  # pylint: disable=protected-access
+    predictions = embedding_ops.safe_embedding_lookup_sparse(
+        variable,
+        embedding_lookup_arguments.input_tensor,
+        sparse_weights=embedding_lookup_arguments.weight_tensor,
+        default_id=0,
+        combiner=embedding_lookup_arguments.combiner,
+        name=column.name + '_weights')
+    return variable, predictions
+
+
+def _maybe_restore_from_checkpoint(checkpoint_path, variable):
+  if checkpoint_path is not None:
+    path, tensor_name = checkpoint_path
+    weights_to_restore = variable
+    if len(variable) == 1:
+      weights_to_restore = variable[0]
+    checkpoint_utils.init_from_checkpoint(path,
+                                          {tensor_name: weights_to_restore})
+
 
 
 def weighted_sum_from_feature_columns(columns_to_tensors,
@@ -158,7 +217,7 @@ def weighted_sum_from_feature_columns(columns_to_tensors,
     weight_collections: List of graph collections to which weights are added.
     trainable: If `True` also add variables to the graph collection
       `GraphKeys.TRAINABLE_VARIABLES` (see tf.Variable).
-    scope: Optional scope fpor variable_op_scope.
+    scope: Optional scope for variable_scope.
 
   Returns:
     A tuple of followings:
@@ -170,26 +229,44 @@ def weighted_sum_from_feature_columns(columns_to_tensors,
     ValueError: if FeatureColumn cannot be used for linear predictions.
   """
   check_feature_columns(feature_columns)
-  with variable_scope.variable_op_scope(columns_to_tensors.values(), scope,
-                                        'weighted_sum_from_feature_columns'):
+  with variable_scope.variable_scope(
+      scope,
+      default_name='weighted_sum_from_feature_columns',
+      values=columns_to_tensors.values()):
     output_tensors = []
     column_to_variable = dict()
     transformer = _Transformer(columns_to_tensors)
     for column in sorted(set(feature_columns), key=lambda x: x.key):
-      with variable_scope.variable_op_scope(
-          columns_to_tensors.values(), None, column.name):
-        try:
-          transformed_tensor = transformer.transform(column)
-          predictions, variable = column.to_weighted_sum(transformed_tensor,
-                                                         num_outputs,
-                                                         weight_collections,
-                                                         trainable)
-        except ValueError as e:
-          raise ValueError('Error creating weighted sum for column: {}.\n'
-                           '{}'.format(column.name, e))
+      transformed_tensor = transformer.transform(column)
+      try:
+        embedding_lookup_arguments = column._to_embedding_lookup_arguments(  # pylint: disable=protected-access
+            transformed_tensor)
+        variable, predictions = _create_embedding_lookup(
+            column,
+            columns_to_tensors,
+            embedding_lookup_arguments,
+            num_outputs,
+            trainable,
+            weight_collections)
+      except NotImplementedError:
+        with variable_scope.variable_scope(
+            None,
+            default_name=column.name,
+            values=columns_to_tensors.values()):
+          tensor = column._to_dense_tensor(transformed_tensor)  # pylint: disable=protected-access
+          variable = [contrib_variables.model_variable(
+              name='weight',
+              shape=[tensor.get_shape()[1], num_outputs],
+              initializer=array_ops.zeros_initializer,
+              collections=weight_collections)]
+          predictions = math_ops.matmul(tensor, variable[0], name='matmul')
+      except ValueError as ee:
+        raise ValueError('Error creating weighted sum for column: {}.\n'
+                         '{}'.format(column.name, ee))
       output_tensors.append(predictions)
       column_to_variable[column] = variable
       _log_variable(variable)
+      _maybe_restore_from_checkpoint(column._checkpoint_path(), variable)  # pylint: disable=protected-access
 
     predictions_no_bias = math_ops.add_n(output_tensors)
     bias = contrib_variables.model_variable(

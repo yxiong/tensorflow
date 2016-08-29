@@ -59,8 +59,12 @@ except NameError:
 python_paths = []
 if os.getenv('PYTHONPATH') is not None:
   python_paths = os.getenv('PYTHONPATH').split(':')
-
-all_paths = set(python_paths + site.getsitepackages())
+try:
+  library_paths =  site.getsitepackages()
+except AttributeError:
+ from distutils.sysconfig import get_python_lib
+ library_paths = get_python_lib()
+all_paths = set(python_paths + library_paths)
 
 paths = []
 for path in all_paths:
@@ -69,10 +73,9 @@ for path in all_paths:
 
 if len(paths) == 1:
   print(paths[0])
-ret_paths = ""
-for path in paths:
-  ret_paths += path + " "
-print(ret_paths)
+else:
+  ret_paths = " ".join(paths)
+  print(ret_paths)
 END
 }
 
@@ -118,7 +121,7 @@ function setup_python {
   done
   set -- $python_lib_path
   echo "Please input the desired Python library path to use.  Default is ["$1"]"
-  read b
+  read b || true
   if [ "$b" == "" ]; then
    python_lib="$(default_python_path $python_lib_path)"
    echo $python_lib

@@ -477,11 +477,14 @@ instructions for the first two dimensions are swapped.
 Examples:
 
 Calling `X, Y = meshgrid(x, y)` with the tensors
+
 ```prettyprint
   x = [1, 2, 3]
   y = [4, 5, 6]
 ```
+
 results in
+
 ```prettyprint
   X = [[1, 1, 1],
        [2, 2, 2],
@@ -582,7 +585,7 @@ not the same dimensionality as `input`.
 
 For the ith spec,
 `begin_mask`, `end_mask`, `ellipsis_mask`, `new_axis_mask`,
-and `shrink_axis_mask` will have the ith bit corrsponding to
+and `shrink_axis_mask` will have the ith bit corresponding to
 the ith spec.
 
 If the ith bit of `begin_mask` is non-zero, `begin[i]` is ignored and
@@ -1806,7 +1809,7 @@ For example:
 ##### Args:
 
 
-*  <b>`indices`</b>: A list of at least 2 `Tensor` objects of type `int32`.
+*  <b>`indices`</b>: A list of at least 1 `Tensor` objects of type `int32`.
 *  <b>`data`</b>: A list with the same number of `Tensor` objects as `indices` of `Tensor` objects of the same type.
 *  <b>`name`</b>: A name for the operation (optional).
 
@@ -2024,36 +2027,6 @@ endian orderings will give different results.
 ##### Returns:
 
   A `Tensor` of type `type`.
-
-
-- - -
-
-### `tf.contrib.graph_editor.copy(sgv, dst_graph=None, dst_scope='', src_scope='', reuse_dst_scope=False)` {#copy}
-
-Copy a subgraph.
-
-##### Args:
-
-
-*  <b>`sgv`</b>: the source subgraph-view. This argument is converted to a subgraph
-    using the same rules than the function subgraph.make_view.
-*  <b>`dst_graph`</b>: the destination graph.
-*  <b>`dst_scope`</b>: the destination scope.
-*  <b>`src_scope`</b>: the source scope.
-*  <b>`reuse_dst_scope`</b>: if True the dst_scope is re-used if it already exists.
-    Otherwise, the scope is given a unique name based on the one given
-    by postfixing an underscore followed by a digit (default).
-
-##### Returns:
-
-  the subgraph view of the copied subgraph.
-
-##### Raises:
-
-
-*  <b>`TypeError`</b>: if dst_graph is not a tf.Graph.
-*  <b>`StandardError`</b>: if sgv cannot be converted to a SubGraphView using
-    the same rules than the function subgraph.make_view.
 
 
 - - -

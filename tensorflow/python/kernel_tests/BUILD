@@ -22,6 +22,7 @@ py_tests(
         "as_string_op_test.py",
         "attention_ops_test.py",
         "barrier_ops_test.py",
+        "base64_ops_test.py",
         "bcast_ops_test.py",
         "benchmark_test.py",
         "candidate_sampler_ops_test.py",
@@ -60,6 +61,7 @@ py_tests(
         "sparse_to_dense_op_py_test.py",
         "sparsemask_op_test.py",
         "string_join_op_test.py",
+        "string_split_op_test.py",
         "summary_ops_test.py",
         "summary_tensor_op_test.py",
         "template_test.py",
@@ -109,6 +111,7 @@ cuda_py_tests(
         "array_ops_test.py",
         "batch_matmul_op_test.py",
         "batchtospace_op_test.py",
+        "betainc_op_test.py",
         "bias_op_test.py",
         "bitcast_op_test.py",
         "check_ops_test.py",
@@ -199,6 +202,15 @@ cuda_py_tests(
         "sparse_ops_test.py",
         "sparse_tensor_dense_matmul_op_test.py",
     ],
+)
+
+# TODO(gpapan): Revisit the gradient of extract_image_patches_op to resolve
+# http://b/31080670.
+cuda_py_test(
+    name = "extract_image_patches_grad_test",
+    size = "medium",
+    srcs = ["extract_image_patches_grad_test.py"],
+    tags = ["notap"],  # http://b/31080670
 )
 
 cuda_py_test(

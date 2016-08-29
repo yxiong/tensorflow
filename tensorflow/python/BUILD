@@ -71,6 +71,34 @@ tf_py_test(
     ],
 )
 
+tf_py_test(
+    name = "flags_test",
+    size = "small",
+    srcs = ["platform/flags_test.py"],
+    additional_deps = [
+        ":platform",
+        ":platform_test",
+    ],
+    tags = [
+        "manual",
+        "notap",
+    ],
+)
+
+tf_py_test(
+    name = "app_test",
+    size = "small",
+    srcs = ["platform/app_test.py"],
+    additional_deps = [
+        ":platform",
+        ":platform_test",
+    ],
+    tags = [
+        "manual",
+        "notap",
+    ],
+)
+
 cc_library(
     name = "numpy_lib",
     srcs = ["lib/core/numpy.cc"],
@@ -167,6 +195,18 @@ cc_library(
         "//tensorflow/core:protos_cc",
     ],
     alwayslink = 1,
+)
+
+cc_library(
+    name = "cpp_shape_inference",
+    srcs = ["framework/cpp_shape_inference.cc"],
+    hdrs = ["framework/cpp_shape_inference.h"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//tensorflow/c:tf_status_helper",
+        "//tensorflow/core:framework",
+        "//tensorflow/core:protos_cc",
+    ],
 )
 
 cc_library(
@@ -300,9 +340,7 @@ py_test(
 tf_gen_op_wrapper_py(
     name = "functional_ops",
     out = "ops/gen_functional_ops.py",
-    hidden = [
-        "SymbolicGradient",
-    ],
+    hidden_file = "ops/hidden_ops.txt",
 )
 
 py_library(
@@ -362,6 +400,19 @@ cc_library(
     linkstatic = 1,
     deps = ["//tensorflow/core:framework"],
     alwayslink = 1,
+)
+
+py_test(
+    name = "framework_common_shapes_test",
+    size = "small",
+    srcs = ["framework/common_shapes_test.py"],
+    main = "framework/common_shapes_test.py",
+    srcs_version = "PY2AND3",
+    deps = [
+        ":framework_test_lib",
+        ":platform_test",
+        "//tensorflow/core:protos_all_py",
+    ],
 )
 
 py_test(
@@ -489,51 +540,19 @@ py_test(
 
 tf_gen_op_wrapper_py(
     name = "array_ops",
-    hidden = [
-        "BroadcastGradientArgs",
-        "ConcatOffset",
-        "Concat",
-        "Const",
-        "EditDistance",
-        "MirrorPad",
-        "MirrorPadGrad",
-        "OneHot",
-        "Pack",
-        "Pad",
-        "Placeholder",
-        "RefIdentity",
-        "Split",
-        "Slice",
-        "TileGrad",  # Exported through array_grad instead of array_ops.
-        "ZerosLike",  # TODO(josh11b): Use this instead of the Python version.
-        "Unpack",
-    ],
+    hidden_file = "ops/hidden_ops.txt",
     require_shape_functions = True,
 )
 
 tf_gen_op_wrapper_py(
     name = "candidate_sampling_ops",
-    hidden = [
-        "AllCandidateSampler",
-        "ComputeAccidentalHits",
-        "FixedUnigramCandidateSampler",
-        "LearnedUnigramCandidateSampler",
-        "LogUniformCandidateSampler",
-        "ThreadUnsafeUnigramCandidateSampler",
-        "UniformCandidateSampler",
-    ],
+    hidden_file = "ops/hidden_ops.txt",
     require_shape_functions = True,
 )
 
 tf_gen_op_wrapper_py(
     name = "control_flow_ops",
-    hidden = [
-        "Switch",
-        "Merge",
-        "RefMerge",
-        "Exit",
-        "RefExit",
-    ],
+    hidden_file = "ops/hidden_ops.txt",
     require_shape_functions = True,
     deps = [
         "//tensorflow/core:control_flow_ops_op_lib",
@@ -543,259 +562,98 @@ tf_gen_op_wrapper_py(
 
 tf_gen_op_wrapper_py(
     name = "ctc_ops",
-    hidden = [
-        "CTCLoss",
-        "CTCGreedyDecoder",
-        "CTCBeamSearchDecoder",
-    ],
+    hidden_file = "ops/hidden_ops.txt",
     require_shape_functions = True,
 )
 
 tf_gen_op_wrapper_py(
     name = "data_flow_ops",
-    hidden = [
-        "Barrier",
-        "BarrierClose",
-        "BarrierIncompleteSize",
-        "BarrierInsertMany",
-        "BarrierReadySize",
-        "BarrierTakeMany",
-        "PriorityQueue",
-        "FIFOQueue",
-        "HashTable",
-        "InitializeTable",
-        "InitializeTableFromTextFile",
-        "LookupTableExport",
-        "LookupTableFind",
-        "LookupTableInsert",
-        "LookupTableSize",
-        "MutableHashTable",
-        "MutableHashTableOfTensors",
-        "Mutex",
-        "MutexAcquire",
-        "MutexRelease",
-        "PaddingFIFOQueue",
-        "QueueClose",
-        "QueueDequeue",
-        "QueueDequeueMany",
-        "QueueDequeueUpTo",
-        "QueueEnqueue",
-        "QueueEnqueueMany",
-        "QueueSize",
-        "RandomShuffleQueue",
-        "Stack",
-        "StackPop",
-        "StackPush",
-        "StackClose",
-        "TensorArray",
-        "TensorArrayClose",
-        "TensorArrayConcat",
-        "TensorArrayGrad",
-        "TensorArrayRead",
-        "TensorArrayPack",
-        "TensorArraySize",
-        "TensorArraySplit",
-        "TensorArrayUnpack",
-        "TensorArrayWrite",
-        "GetSessionHandle",
-        "GetSessionTensor",
-        "DeleteSessionTensor",
-    ],
+    hidden_file = "ops/hidden_ops.txt",
     require_shape_functions = True,
 )
 
 tf_gen_op_wrapper_py(
     name = "image_ops",
-    hidden = [
-        "RandomCrop",
-        "ResizeBilinearGrad",
-        "ResizeNearestNeighborGrad",
-        "AdjustContrastv2",
-        "ScaleImageGrad",
-    ],
+    hidden_file = "ops/hidden_ops.txt",
     require_shape_functions = True,
 )
 
 tf_gen_op_wrapper_py(
     name = "io_ops",
-    hidden = [
-        "FixedLengthRecordReader",
-        "IdentityReader",
-        "ReaderClose",
-        "ReaderEnqueueWork",
-        "ReaderNumRecordsProduced",
-        "ReaderNumWorkUnitsCompleted",
-        "ReaderRead",
-        "ReaderReadUpTo",
-        "ReaderReset",
-        "ReaderRestoreState",
-        "ReaderSerializeState",
-        "ReaderWorkQueueLength",
-        "Restore",
-        "RestoreSlice",
-        "Save",
-        "SaveSlices",
-        "ShardedFilename",
-        "ShardedFilespec",
-        "TextLineReader",
-        "TFRecordReader",
-        "WholeFileReader",
-    ],
+    hidden_file = "ops/hidden_ops.txt",
     require_shape_functions = True,
 )
 
 tf_gen_op_wrapper_py(
     name = "linalg_ops",
+    hidden_file = "ops/hidden_ops.txt",
     require_shape_functions = True,
 )
 
 tf_gen_op_wrapper_py(
     name = "logging_ops",
-    hidden = [
-        "Assert",
-        "AudioSummary",
-        "HistogramAccumulatorSummary",
-        "HistogramSummary",
-        "ImageSummary",
-        "MergeSummary",
-        "Print",
-        "ScalarSummary",
-        "TensorSummary",
-    ],
+    hidden_file = "ops/hidden_ops.txt",
     require_shape_functions = True,
 )
 
 tf_gen_op_wrapper_py(
     name = "math_ops",
-    hidden = [
-        "Abs",
-        "AddN",
-        "All",
-        "Any",
-        "BatchMatMul",
-        "Complex",
-        "Max",
-        "Mean",
-        "Min",
-        "Pow",
-        "Prod",
-        "Range",
-        "SparseMatMul",
-        "Sum",
-        "MatMul",
-        "Sigmoid",
-        "Tanh",
-        "SigmoidGrad",
-        "TanhGrad",
-    ],
+    hidden_file = "ops/hidden_ops.txt",
     require_shape_functions = True,
 )
 
 tf_gen_op_wrapper_py(
     name = "nn_ops",
-    hidden = [
-        "AvgPoolGrad",  # "*Grad" accessible through nn_grad instead of nn_ops.
-        "BatchNormWithGlobalNormalization",
-        "BatchNormWithGlobalNormalizationGrad",
-        "SoftmaxCrossEntropyWithLogits",
-        "SparseSoftmaxCrossEntropyWithLogits",
-        "LRNGrad",
-        "MaxPoolGrad",
-        "MaxPoolGradWithArgmax",
-        "ReluGrad",
-        "Relu6Grad",
-        "EluGrad",
-        "SoftplusGrad",
-        "SoftsignGrad",
-        "TopK",
-        "TopKV2",
-        "BiasAdd",
-        "BiasAddV1",
-        "Relu6",
-        "AvgPool",
-        "MaxPool",
-    ],
+    hidden_file = "ops/hidden_ops.txt",
     require_shape_functions = True,
 )
 
 tf_gen_op_wrapper_py(
     name = "parsing_ops",
-    hidden = [
-        "ParseExample",
-        "ParseSingleSequenceExample",
-    ],
+    hidden_file = "ops/hidden_ops.txt",
     require_shape_functions = True,
 )
 
 tf_gen_op_wrapper_py(
     name = "random_ops",
-    hidden = [
-        "RandomGamma",
-        "RandomUniform",
-        "RandomUniformInt",
-        "RandomShuffle",
-        "RandomStandardNormal",
-        "ParameterizedTruncatedNormal",
-        "TruncatedNormal",
-    ],
+    hidden_file = "ops/hidden_ops.txt",
     require_shape_functions = True,
 )
 
 tf_gen_op_wrapper_py(
     name = "script_ops",
-    hidden = [
-        "PyFunc",
-        "PyFuncStateless",
-    ],
+    hidden_file = "ops/hidden_ops.txt",
     require_shape_functions = True,
 )
 
 tf_gen_op_wrapper_py(
     name = "state_ops",
-    hidden = [
-        "Variable",
-        "TemporaryVariable",
-        "DestroyTemporaryVariable",
-    ],
+    hidden_file = "ops/hidden_ops.txt",
     require_shape_functions = True,
 )
 
 tf_gen_op_wrapper_py(
     name = "sparse_ops",
-    hidden = [
-        "DeserializeManySparse",
-        "SerializeManySparse",
-        "SerializeSparse",
-        "SparseAdd",
-        "SparseAddGrad",
-        "SparseConcat",
-        "SparseSplit",
-        "SparseSelectLastK",
-        "SparseReorder",
-        "SparseReshape",
-        "SparseToDense",
-        "SparseTensorDenseAdd",
-        "SparseTensorDenseMatMul",
-    ],
+    hidden_file = "ops/hidden_ops.txt",
     require_shape_functions = True,
 )
 
 tf_gen_op_wrapper_py(
     name = "string_ops",
+    hidden_file = "ops/hidden_ops.txt",
     require_shape_functions = True,
 )
 
 tf_gen_op_wrapper_py(
     name = "user_ops",
-    hidden = [
-        "Fact",
-    ],
+    hidden_file = "ops/hidden_ops.txt",
     require_shape_functions = False,
 )
 
 tf_gen_op_wrapper_py(
     name = "training_ops",
     out = "training/gen_training_ops.py",
+    hidden_file = "ops/hidden_ops.txt",
     require_shape_functions = True,
 )
 
@@ -1109,6 +967,7 @@ tf_py_wrap_cc(
         "client/net_lib.i",
         "client/quantize_training.i",
         "client/tf_session.i",
+        "framework/cpp_shape_inference.i",
         "framework/python_op_gen.i",
         "lib/core/py_func.i",
         "lib/core/strings.i",
@@ -1126,6 +985,7 @@ tf_py_wrap_cc(
         ":py_func_lib",
         ":py_record_reader_lib",
         ":py_record_writer_lib",
+        ":cpp_shape_inference",
         ":python_op_gen",
         ":tf_session_helper",
         "//tensorflow/core/distributed_runtime/rpc:grpc_server_lib",
@@ -1322,7 +1182,10 @@ py_test(
     size = "small",
     srcs = ["training/saver_large_variable_test.py"],
     srcs_version = "PY2AND3",
-    tags = ["notsan"],  # http://b/30379628
+    tags = [
+        "noasan",  # http://b/30379628
+        "notsan",  # http://b/30379628
+    ],
     deps = [
         "//tensorflow:tensorflow_py",
     ],
@@ -1333,6 +1196,10 @@ py_test(
     size = "medium",
     srcs = ["training/saver_large_partitioned_variable_test.py"],
     srcs_version = "PY2AND3",
+    tags = [
+        "noasan",  # http://b/30782289
+        "notsan",  # http://b/30782289
+    ],
     deps = [
         "//tensorflow:tensorflow_py",
     ],
@@ -1342,9 +1209,7 @@ cuda_py_test(
     name = "session_manager_test",
     size = "medium",  # TODO(irving): Can this be made small?
     srcs = ["training/session_manager_test.py"],
-    additional_deps = [
-        ":training",
-    ],
+    additional_deps = [":training"],
     main = "training/session_manager_test.py",
 )
 
@@ -1397,6 +1262,7 @@ py_tests(
         "summary/impl/event_file_loader_test.py",
         "summary/impl/gcs_file_loader_test.py",
         "summary/impl/reservoir_test.py",
+        "summary/summary_test.py",
     ],
     additional_deps = [
         ":summary",

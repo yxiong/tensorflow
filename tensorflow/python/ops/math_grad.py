@@ -552,7 +552,13 @@ def _PowGrad(op, grad):
   gx = array_ops.reshape(
       math_ops.reduce_sum(grad * y * math_ops.pow(x, y - 1), rx), sx)
   # Avoid false singularity at x = 0
-  log_x = math_ops.select(x > 0, math_ops.log(x), array_ops.zeros_like(x))
+  if x.dtype.is_complex:
+    # real(x) < 0 is fine for the complex case
+    log_x = math_ops.select(
+        math_ops.not_equal(x, 0), math_ops.log(x), array_ops.zeros_like(x))
+  else:
+    # There's no sensible real value to return if x < 0, so return 0
+    log_x = math_ops.select(x > 0, math_ops.log(x), array_ops.zeros_like(x))
   gy = array_ops.reshape(
       math_ops.reduce_sum(grad * z * log_x, ry), sy)
   return gx, gy
@@ -775,7 +781,8 @@ def _ComplexAbsGrad(op, grad):
 
 @ops.RegisterGradient("Cast")
 def _CastGrad(op, grad):
-  t = [dtypes.float16, dtypes.float32, dtypes.float64, dtypes.bfloat16]
+  t = [dtypes.float16, dtypes.float32, dtypes.float64,
+       dtypes.bfloat16, dtypes.complex64, dtypes.complex128]
   src_type = op.inputs[0].dtype.base_dtype
   dst_type = grad.dtype.base_dtype
   if src_type in t and dst_type in t:
