@@ -46,7 +46,7 @@ tensorflow/contrib/makefile/download_dependencies.sh
 tensorflow/contrib/makefile/compile_ios_protobuf.sh ${JOBS_COUNT}
 
 # Build the iOS TensorFlow libraries.
-tensorflow/contrib/makefile/compile_ios_tensorflow.sh "-O3" -j ${JOBS_COUNT}
+tensorflow/contrib/makefile/compile_ios_tensorflow.sh "-g -DNDEBUG -Os" -j ${JOBS_COUNT}
 
 # Creates a static universal library in 
 # tensorflow/contrib/makefile/gen/lib/libtensorflow-core.a
