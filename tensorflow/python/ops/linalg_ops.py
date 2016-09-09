@@ -18,192 +18,36 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+from tensorflow.python.framework import common_shapes
 from tensorflow.python.framework import ops
-from tensorflow.python.framework import tensor_shape
 from tensorflow.python.ops import gen_linalg_ops
+from tensorflow.python.ops import math_ops
 # go/tf-wildcard-import
 # pylint: disable=wildcard-import
 from tensorflow.python.ops.gen_linalg_ops import *
 # pylint: enable=wildcard-import
 
 
-def _UnchangedSquareHelper(input_shape):
-  """Helper for {Batch}UnchangedSquare."""
-  # The matrices in the batch must be square.
-  input_shape[-1].assert_is_compatible_with(input_shape[-2])
-  return [input_shape]
-
-
-@ops.RegisterShape("Cholesky")
-@ops.RegisterShape("CholeskyGrad")
-@ops.RegisterShape("MatrixInverse")
-def _UnchangedSquare(op):
-  """Shape function for matrix ops with output equal to input shape."""
-  return _UnchangedSquareHelper(op.inputs[0].get_shape().with_rank(2))
-
-
-@ops.RegisterShape("BatchCholesky")
-@ops.RegisterShape("BatchCholeskyGrad")
-@ops.RegisterShape("BatchMatrixInverse")
-def _BatchUnchangedSquare(op):
-  """Shape function for batch matrix ops with output equal to input shape."""
-  return _UnchangedSquareHelper(op.inputs[0].get_shape().with_rank_at_least(2))
-
-
-@ops.RegisterShape("MatrixDeterminant")
-def _MatrixDeterminantShape(op):
-  """Shape function for determinant op."""
-  input_shape = op.inputs[0].get_shape().with_rank(2)
-  # The matrix must be square.
-  input_shape[0].assert_is_compatible_with(input_shape[1])
-  if input_shape.ndims is not None:
-    return [tensor_shape.scalar()]
-  else:
-    return [tensor_shape.unknown_shape()]
-
-
-@ops.RegisterShape("BatchMatrixDeterminant")
-def _BatchMatrixDeterminantShape(op):
-  """Shape function for batch determinant op."""
-  input_shape = op.inputs[0].get_shape().with_rank_at_least(2)
-  # The matrices in the batch must be square.
-  input_shape[-1].assert_is_compatible_with(input_shape[-2])
-  if input_shape.ndims is not None:
-    return [input_shape[:-2]]
-  else:
-    return [tensor_shape.unknown_shape()]
-
-
-@ops.RegisterShape("SelfAdjointEig")
-def _SelfAdjointEigShape(op):
-  """Shape function for self-adjoint eigensolver op."""
-  input_shape = op.inputs[0].get_shape().with_rank(2)
-  # The matrix must be square.
-  input_shape[0].assert_is_compatible_with(input_shape[1])
-  d = input_shape.dims[0]
-  out_shape = tensor_shape.TensorShape([d + 1, d])
-  return [out_shape]
-
-
-@ops.RegisterShape("BatchSelfAdjointEig")
-def _BatchSelfAdjointEigShape(op):
-  """Shape function for batch self-adjoint eigensolver op."""
-  input_shape = op.inputs[0].get_shape().with_rank_at_least(2)
-  # The matrices in the batch must be square.
-  input_shape[-1].assert_is_compatible_with(input_shape[-2])
-  dlist = input_shape.dims
-  dlist[-2] += 1
-  out_shape = tensor_shape.TensorShape(dlist)
-  return [out_shape]
-
-
-def _SelfAdjointEigV2ShapeHelper(op, input_shape):
-  """Shape inference helper for {Batch}SelfAdjointEigV2."""
-  batch_shape = input_shape[:-2]
-  n = input_shape[-1].merge_with(input_shape[-2])
-  compute_v = op.get_attr("compute_v")
-  if compute_v:
-    return [batch_shape.concatenate([n]), batch_shape.concatenate([n, n])]
-  else:
-    return [batch_shape.concatenate([n]), [0]]
-
-
-@ops.RegisterShape("SelfAdjointEigV2")
-def _SelfAdjointEigShapeV2(op):
-  """Shape function for SelfAdjointEigV2."""
-  return _SelfAdjointEigV2ShapeHelper(op, op.inputs[0].get_shape().with_rank(2))
-
-
-@ops.RegisterShape("BatchSelfAdjointEigV2")
-def _BatchSelfAdjointEigV2Shape(op):
-  """Shape function for BatchSelfAdjointEigV2."""
-  return _SelfAdjointEigV2ShapeHelper(
-      op, op.inputs[0].get_shape().with_rank_at_least(2))
-
-
-def _SvdShapeHelper(input_shape, op):
-  """Shape inference helper for {Batch}SVD op."""
-  unknown = tensor_shape.unknown_shape()
-  if input_shape.ndims is not None:
-    return [unknown, unknown, unknown]
-  compute_uv = op.get_attr("compute_uv")
-  full_matrices = op.get_attr("full_matrices")
-  m = input_shape[-2]
-  n = input_shape[-1]
-  p = min(m, n)
-  batch_shape = input_shape[:-2]
-  s_shape = batch_shape.concatenate([p])
-  if compute_uv:
-    if full_matrices:
-      u_shape = batch_shape.concatenate([m, m])
-      v_shape = batch_shape.concatenate([n, n])
-    else:
-      u_shape = batch_shape.concatenate([m, p])
-      v_shape = batch_shape.concatenate([n, p])
-  else:
-    u_shape = [0]
-    v_shape = [0]
-  return [s_shape, u_shape, v_shape]
-
-
-@ops.RegisterShape("Svd")
-def _SvdShape(op):
-  """Shape function for SVD op."""
-  return _SvdShapeHelper(op.inputs[0].get_shape().with_rank(2), op)
-
-
-@ops.RegisterShape("BatchSvd")
-def _BatchSvdShape(op):
-  """Shape function for batch SVD op."""
-  return _SvdShapeHelper(op.inputs[0].get_shape().with_rank_at_least(2), op)
-
-
-def _SquareMatrixSolveShapeHelper(lhs_shape, rhs_shape):
-  """Shape inference helper function for square matrix solver ops."""
-  # The matrix must be square.
-  lhs_shape[-1].assert_is_compatible_with(lhs_shape[-2])
-  # The matrix and right-hand side must have the same number of rows.
-  lhs_shape[-2].assert_is_compatible_with(rhs_shape[-2])
-  return [rhs_shape]
-
-
-@ops.RegisterShape("MatrixSolve")
-@ops.RegisterShape("MatrixTriangularSolve")
-def _SquareMatrixSolveShape(op):
-  """Shape function for square matrix solver ops."""
-  return _SquareMatrixSolveShapeHelper(op.inputs[0].get_shape().with_rank(2),
-                                       op.inputs[1].get_shape().with_rank(2))
-
-
-@ops.RegisterShape("BatchMatrixSolve")
-@ops.RegisterShape("BatchMatrixTriangularSolve")
-def _BatchSquareMatrixSolveShape(op):
-  """Shape function for batch square matrix solver ops."""
-  return _SquareMatrixSolveShapeHelper(
-      op.inputs[0].get_shape().with_rank_at_least(2),
-      op.inputs[1].get_shape().with_rank_at_least(2))
-
-
-def _MatrixSolveLsShapeHelper(lhs_shape, rhs_shape):
-  """Shape inference helper function for least squares matrix solver ops."""
-  # The matrices and right-hand sides must have the same number of rows.
-  lhs_shape[-2].assert_is_compatible_with(rhs_shape[-2])
-  return [lhs_shape[:-2].concatenate([lhs_shape[-1], rhs_shape[-1]])]
-
-
-@ops.RegisterShape("MatrixSolveLs")
-def _MatrixSolveLsShape(op):
-  """Shape function for least-squares matrix solver op."""
-  return _MatrixSolveLsShapeHelper(op.inputs[0].get_shape().with_rank(2),
-                                   op.inputs[1].get_shape().with_rank(2))
-
-
-@ops.RegisterShape("BatchMatrixSolveLs")
-def _BatchMatrixSolveLsShape(op):
-  """Shape function for batch least-squares matrix solver op."""
-  return _MatrixSolveLsShapeHelper(
-      op.inputs[0].get_shape().with_rank_at_least(2),
-      op.inputs[1].get_shape().with_rank_at_least(2))
+ops.RegisterShape("Cholesky")(common_shapes.call_cpp_shape_fn)
+ops.RegisterShape("CholeskyGrad")(common_shapes.call_cpp_shape_fn)
+ops.RegisterShape("MatrixInverse")(common_shapes.call_cpp_shape_fn)
+ops.RegisterShape("BatchCholesky")(common_shapes.call_cpp_shape_fn)
+ops.RegisterShape("BatchCholeskyGrad")(common_shapes.call_cpp_shape_fn)
+ops.RegisterShape("BatchMatrixInverse")(common_shapes.call_cpp_shape_fn)
+ops.RegisterShape("MatrixDeterminant")(common_shapes.call_cpp_shape_fn)
+ops.RegisterShape("BatchMatrixDeterminant")(common_shapes.call_cpp_shape_fn)
+ops.RegisterShape("SelfAdjointEig")(common_shapes.call_cpp_shape_fn)
+ops.RegisterShape("BatchSelfAdjointEig")(common_shapes.call_cpp_shape_fn)
+ops.RegisterShape("SelfAdjointEigV2")(common_shapes.call_cpp_shape_fn)
+ops.RegisterShape("BatchSelfAdjointEigV2")(common_shapes.call_cpp_shape_fn)
+ops.RegisterShape("Svd")(common_shapes.call_cpp_shape_fn)
+ops.RegisterShape("BatchSvd")(common_shapes.call_cpp_shape_fn)
+ops.RegisterShape("MatrixSolve")(common_shapes.call_cpp_shape_fn)
+ops.RegisterShape("MatrixTriangularSolve")(common_shapes.call_cpp_shape_fn)
+ops.RegisterShape("BatchMatrixSolve")(common_shapes.call_cpp_shape_fn)
+ops.RegisterShape("BatchMatrixTriangularSolve")(common_shapes.call_cpp_shape_fn)
+ops.RegisterShape("MatrixSolveLs")(common_shapes.call_cpp_shape_fn)
+ops.RegisterShape("BatchMatrixSolveLs")(common_shapes.call_cpp_shape_fn)
 
 
 # Names below are lower_case.
@@ -336,11 +180,9 @@ def matrix_solve_ls(matrix, rhs, l2_regularizer=0.0, fast=True, name=None):
     output: Matrix of shape `[N, K]` containing the matrix that solves
       `matrix * output = rhs` in the least-squares sense.
   """
-  return gen_linalg_ops.matrix_solve_ls(matrix,
-                                        rhs,
-                                        l2_regularizer,
-                                        fast=fast,
-                                        name=name)
+  # pylint: disable=protected-access
+  return gen_linalg_ops._matrix_solve_ls(
+      matrix, rhs, l2_regularizer, fast=fast, name=name)
 
 
 def batch_matrix_solve_ls(matrix,
@@ -398,11 +240,9 @@ def batch_matrix_solve_ls(matrix,
       `matrix[..., :, :] * output[..., :, :] = rhs[..., :, :]` in the least
       squares sense.
   """
-  return gen_linalg_ops.batch_matrix_solve_ls(matrix,
-                                              rhs,
-                                              l2_regularizer,
-                                              fast=fast,
-                                              name=name)
+  # pylint: disable=protected-access
+  return gen_linalg_ops._batch_matrix_solve_ls(
+      matrix, rhs, l2_regularizer, fast=fast, name=name)
 
 
 def self_adjoint_eig(matrix, name=None):
@@ -420,7 +260,8 @@ def self_adjoint_eig(matrix, name=None):
     v: Eigenvectors. Shape is `[N, N]`. The columns contain the eigenvectors of
       `matrix`.
   """
-  e, v = gen_linalg_ops.self_adjoint_eig_v2(matrix, compute_v=True, name=name)
+  # pylint: disable=protected-access
+  e, v = gen_linalg_ops._self_adjoint_eig_v2(matrix, compute_v=True, name=name)
   return e, v
 
 
@@ -441,7 +282,8 @@ def batch_self_adjoint_eig(tensor, name=None):
     matrices
       contain eigenvectors of the corresponding matrices in `tensor`
   """
-  e, v = gen_linalg_ops.batch_self_adjoint_eig_v2(
+  # pylint: disable=protected-access
+  e, v = gen_linalg_ops._batch_self_adjoint_eig_v2(
       tensor, compute_v=True, name=name)
   return e, v
 
@@ -456,7 +298,8 @@ def self_adjoint_eigvals(matrix, name=None):
   Returns:
     e: Eigenvalues of `matrix`. Shape is `[N]`.
   """
-  e, _ = gen_linalg_ops.self_adjoint_eig_v2(matrix, compute_v=False, name=name)
+  # pylint: disable=protected-access
+  e, _ = gen_linalg_ops._self_adjoint_eig_v2(matrix, compute_v=False, name=name)
   return e
 
 
@@ -471,7 +314,8 @@ def batch_self_adjoint_eigvals(tensor, name=None):
     e: Eigenvalues. Shape is `[..., N]`. The vector `e[..., :]` contains the `N`
       eigenvalues of `tensor[..., :, :]`.
   """
-  e, _ = gen_linalg_ops.batch_self_adjoint_eig_v2(
+  # pylint: disable=protected-access
+  e, _ = gen_linalg_ops._batch_self_adjoint_eig_v2(
       tensor, compute_v=False, name=name)
   return e
 
@@ -510,13 +354,13 @@ def svd(matrix, compute_uv=True, full_matrices=False, name=None):
       shape is `[N, P]`. If `full_matrices` is `True` then shape is
       `[N, N]`. Not returned if `compute_uv` is `False`.
   """
-  s, u, v = gen_linalg_ops.svd(matrix,
-                               compute_uv=compute_uv,
-                               full_matrices=full_matrices)
+  # pylint: disable=protected-access
+  s, u, v = gen_linalg_ops._svd(
+      matrix, compute_uv=compute_uv, full_matrices=full_matrices)
   if compute_uv:
-    return s, u, v
+    return math_ops.real(s), u, v
   else:
-    return s
+    return math_ops.real(s)
 
 
 def batch_svd(tensor, compute_uv=True, full_matrices=False, name=None):
@@ -555,12 +399,13 @@ def batch_svd(tensor, compute_uv=True, full_matrices=False, name=None):
       shape is `[..., N, P]`. If `full_matrices` is `True` then shape is
       `[..., N, N]`. Not returned if `compute_uv` is `False`.
   """
-  s, u, v = gen_linalg_ops.batch_svd(
+  # pylint: disable=protected-access
+  s, u, v = gen_linalg_ops._batch_svd(
       tensor, compute_uv=compute_uv, full_matrices=full_matrices)
   if compute_uv:
-    return s, u, v
+    return math_ops.real(s), u, v
   else:
-    return s
+    return math_ops.real(s)
 
 
 # pylint: enable=invalid-name

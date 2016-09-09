@@ -465,6 +465,8 @@ def streaming_accuracy(predictions, labels, weights=None,
   predictions, labels = metric_ops_util.remove_squeezable_dimensions(
       predictions, labels)
   predictions.get_shape().assert_is_compatible_with(labels.get_shape())
+  if labels.dtype != predictions.dtype:
+    predictions = math_ops.cast(predictions, labels.dtype)
   is_correct = math_ops.to_float(math_ops.equal(predictions, labels))
   return streaming_mean(is_correct, weights, metrics_collections,
                         updates_collections, name or 'accuracy')

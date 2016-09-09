@@ -68,6 +68,7 @@ load(
 )
 load("//tensorflow:tensorflow.bzl", "tf_cc_test_gpu")
 load("//tensorflow:tensorflow.bzl", "tf_cc_tests_gpu")
+load("//tensorflow:tensorflow.bzl", "tf_version_info_genrule")
 
 # For platform specific build config
 load(
@@ -171,7 +172,6 @@ cc_library(
         "platform/env.h",
         "platform/file_system.h",
         "platform/fingerprint.h",
-        "platform/hexagon/profile_utils/cpu_utils.h",
         "platform/init_main.h",
         "platform/logging.h",
         "platform/macros.h",
@@ -179,6 +179,7 @@ cc_library(
         "platform/net.h",
         "platform/mutex.h",
         "platform/notification.h",
+        "platform/profile_utils/cpu_utils.h",
         "platform/protobuf.h",  # TODO(josh11b): make internal
         "platform/regexp.h",
         "platform/strong_hash.h",
@@ -862,8 +863,8 @@ cc_library(
             "lib/**/*.cc",
             "platform/*.h",
             "platform/*.cc",
-            "platform/hexagon/**/*.h",
-            "platform/hexagon/**/*.cc",
+            "platform/profile_utils/**/*.h",
+            "platform/profile_utils/**/*.cc",
         ] + tf_additional_lib_srcs(),
         exclude = [
             "**/*test*",
@@ -891,7 +892,7 @@ cc_library(
         "lib/io/snappy/snappy_inputbuffer.h",
         "lib/io/snappy/snappy_outputbuffer.h",
         "lib/io/zlib_compression_options.h",
-        "lib/io/zlib_inputbuffer.h",
+        "lib/io/zlib_inputstream.h",
         "lib/io/zlib_outputbuffer.h",
         "lib/jpeg/jpeg_handle.h",
         "lib/png/png_io.h",
@@ -938,6 +939,13 @@ cc_library(
     ],
 )
 
+tf_version_info_genrule()
+
+cc_library(
+    name = "version_lib",
+    srcs = ["util/version_info.cc"],
+)
+
 tf_cuda_library(
     name = "framework_internal",
     srcs = glob(
@@ -980,6 +988,7 @@ tf_cuda_library(
         ":lib_internal",
         ":proto_text",
         ":protos_all_cc",
+        ":version_lib",
         "//tensorflow/core/kernels:bounds_check",
         "//third_party/eigen3",
     ],
@@ -996,6 +1005,7 @@ cc_header_only_library(
 
 cc_header_only_library(
     name = "stream_executor_headers_lib",
+    visibility = ["//visibility:public"],
     deps = [
         ":stream_executor",
     ],
@@ -1347,11 +1357,11 @@ tf_cc_tests(
         "lib/strings/stringprintf_test.cc",
         "lib/wav/wav_io_test.cc",
         "platform/fingerprint_test.cc",
-        "platform/hexagon/profile_utils/cpu_utils_test.cc",
         "platform/integral_types_test.cc",
         "platform/logging_test.cc",
         "platform/net_test.cc",
         "platform/port_test.cc",
+        "platform/profile_utils/cpu_utils_test.cc",
     ],
     deps = [
         ":lib",

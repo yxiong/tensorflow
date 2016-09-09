@@ -18,8 +18,6 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-import inspect
-
 import six
 
 from tensorflow.contrib import losses
@@ -183,7 +181,7 @@ class _TargetColumn(object):
                                      weight_tensor, shape=(-1,)))
     return weighted_loss
 
-  def training_loss(self, logits, target, features):
+  def training_loss(self, logits, target, features, name="training_loss"):
     """Returns training loss tensor for this head.
 
     Training loss is different from the loss reported on the tensorboard as we
@@ -199,6 +197,7 @@ class _TargetColumn(object):
       target: either a tensor for labels or in multihead case, a dict of string
         to target tensor.
       features: features dict.
+      name: Op name.
 
     Returns:
       Loss tensor.
@@ -208,10 +207,9 @@ class _TargetColumn(object):
 
     weight_tensor = self.get_weight_tensor(features)
     if weight_tensor is None:
-      return math_ops.reduce_mean(loss_unweighted, name="loss")
-    else:
-      loss_weighted = self._weighted_loss(loss_unweighted, weight_tensor)
-      return math_ops.reduce_mean(loss_weighted, name="loss")
+      return math_ops.reduce_mean(loss_unweighted, name=name)
+    loss_weighted = self._weighted_loss(loss_unweighted, weight_tensor)
+    return math_ops.reduce_mean(loss_weighted, name=name)
 
   def loss(self, logits, target, features):
     """Returns loss tensor for this head.
@@ -235,12 +233,11 @@ class _TargetColumn(object):
     weight_tensor = self.get_weight_tensor(features)
     if weight_tensor is None:
       return math_ops.reduce_mean(loss_unweighted, name="loss")
-    else:
-      loss_weighted = self._weighted_loss(loss_unweighted, weight_tensor)
-      return math_ops.div(
-          math_ops.reduce_sum(loss_weighted),
-          math_ops.to_float(math_ops.reduce_sum(weight_tensor)),
-          name="loss")
+    loss_weighted = self._weighted_loss(loss_unweighted, weight_tensor)
+    return math_ops.div(
+        math_ops.reduce_sum(loss_weighted),
+        math_ops.to_float(math_ops.reduce_sum(weight_tensor)),
+        name="loss")
 
 
 class _RegressionTargetColumn(_TargetColumn):
@@ -294,7 +291,7 @@ class _MultiClassTargetColumn(_TargetColumn):
 
   def _default_eval_metrics(self):
     if self._num_label_columns == 1:
-      return _get_default_binary_metrics_for_eval(thresholds=[.5])
+      return get_default_binary_metrics_for_eval(thresholds=[.5])
     return {}
 
   def get_eval_ops(self, features, logits, targets, metrics=None):
@@ -411,7 +408,7 @@ def _run_metrics(predictions, targets, metrics, weights):
   result = {}
   targets = math_ops.cast(targets, predictions.dtype)
   for name, metric in six.iteritems(metrics or {}):
-    if "weights" in inspect.getargspec(metric)[0]:
+    if weights is not None:
       result[name] = metric(predictions, targets, weights=weights)
     else:
       result[name] = metric(predictions, targets)
@@ -419,7 +416,7 @@ def _run_metrics(predictions, targets, metrics, weights):
   return result
 
 
-def _get_default_binary_metrics_for_eval(thresholds):
+def get_default_binary_metrics_for_eval(thresholds):
   """Returns a dictionary of basic metrics for logistic regression.
 
   Args:

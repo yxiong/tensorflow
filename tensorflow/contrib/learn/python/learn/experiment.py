@@ -25,15 +25,19 @@ from tensorflow.contrib.learn.python.learn import evaluable
 from tensorflow.contrib.learn.python.learn import monitors
 from tensorflow.contrib.learn.python.learn import trainable
 from tensorflow.contrib.learn.python.learn.estimators._sklearn import NotFittedError
-from tensorflow.python.platform import flags
 from tensorflow.python.platform import tf_logging as logging
 from tensorflow.python.training import server_lib
 
-FLAGS = flags.FLAGS
+
+__all__ = ["Experiment"]
 
 
 class Experiment(object):
   """Experiment is a class containing all information needed to train a model.
+
+  After an experiment is created (by passing an Estimator and inputs for
+  training and evaluation), an Experiment instance knows how to invoke training
+  and eval loops in a sensible fashion for distributed training.
   """
 
   def __init__(self,
@@ -48,6 +52,10 @@ class Experiment(object):
                eval_delay_secs=120,
                continuous_eval_throttle_secs=60):
     """Constructor for `Experiment`.
+
+    Creates an Experiment instance. None of the functions passed to this
+    constructor are executed at construction time. They are stored and used
+    when a method is executed which requires it.
 
     Args:
       estimator: Object implementing `Trainable` and `Evaluable`.
@@ -107,13 +115,17 @@ class Experiment(object):
       The trained estimator.
     """
     start = time.time()
+
+    # Start the server, if needed. It's important to start the server before
+    # we (optionally) sleep for the case where no device_filters are set.
+    # Otherwise, the servers will wait to connect to each other before starting
+    # to train. We might as well start as soon as we can.
+    if self._estimator.config.cluster_spec:
+      self._start_server()
+
     if delay_secs is None:
       task_id = self._estimator.config.task or 0
       delay_secs = min(60, task_id * 5)
-
-    # Start the server, if needed.
-    if self._estimator.config.cluster_spec:
-      self._start_server()
 
     if delay_secs:
       elapsed_secs = time.time() - start

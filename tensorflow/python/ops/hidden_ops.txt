@@ -121,7 +121,14 @@ TFRecordReader
 WholeFileReader
 
 # linalg_ops
-# (None)
+BatchMatrixSolveLs
+BatchSelfAdjointEig
+BatchSelfAdjointEigV2
+BatchSvd
+MatrixSolveLs
+SelfAdjointEig
+SelfAdjointEigV2
+Svd
 
 # logging_ops
 Assert
@@ -141,6 +148,7 @@ All
 Any
 BatchMatMul
 Complex
+Conj
 Max
 Mean
 Min
@@ -154,6 +162,9 @@ Sigmoid
 Tanh
 SigmoidGrad
 TanhGrad
+InvGrad
+SqrtGrad
+RsqrtGrad
 
 # nn_ops
 AvgPoolGrad  # "*Grad" accessible through nn_grad instead of nn_ops.
@@ -176,6 +187,10 @@ BiasAddV1
 Relu6
 AvgPool
 MaxPool
+Softmax
+LogSoftmax
+FractionalAvgPoolGrad
+FractionalMaxPoolGrad
 
 # parsing_ops
 ParseExample

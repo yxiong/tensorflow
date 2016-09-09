@@ -450,7 +450,8 @@ module VZ {
       return this.name2datasets[name];
     }
 
-    static getYScaleFromType(yScaleType: string): Plottable.QuantitativeScale<number> {
+    static getYScaleFromType(yScaleType: string):
+        Plottable.QuantitativeScale<number> {
       if (yScaleType === 'log') {
         return new Plottable.Scales.ModifiedLog();
       } else if (yScaleType === 'linear') {
@@ -529,6 +530,10 @@ module VZ {
      * setting the viewBox on the containing svg.
      */
     private setViewBox() {
+      // There's an issue in Firefox where if we measure with the old viewbox
+      // set, we get horrible results.
+      this.targetSVG.attr('viewBox', '');
+
       let svg = this.targetSVG.node() as HTMLElement;
       let brect = svg.getBoundingClientRect();
       let w = brect.width;

@@ -90,6 +90,12 @@ def if_android_arm(a):
       "//conditions:default": [],
   })
 
+def if_android_arm64(a):
+  return select({
+      "//tensorflow:android_arm64": a,
+      "//conditions:default": [],
+  })
+
 def if_not_android(a):
   return select({
       "//tensorflow:android": [],
@@ -131,14 +137,16 @@ def tf_opts_nortti_if_android():
 
 # Given a list of "op_lib_names" (a list of files in the ops directory
 # without their .cc extensions), generate a library for that file.
-def tf_gen_op_libs(op_lib_names):
+def tf_gen_op_libs(op_lib_names, deps=None):
   # Make library out of each op so it can also be used to generate wrappers
   # for various languages.
+  if not deps:
+    deps = []
   for n in op_lib_names:
     native.cc_library(name=n + "_op_lib",
                       copts=tf_copts(),
                       srcs=["ops/" + n + ".cc"],
-                      deps=(["//tensorflow/core:framework"]),
+                      deps=deps + ["//tensorflow/core:framework"],
                       visibility=["//visibility:public"],
                       alwayslink=1,
                       linkstatic=1,)
@@ -805,3 +813,18 @@ def tf_genrule_cmd_append_to_srcs(to_append):
     return ("cat $(SRCS) > $(@) && " +
             "echo >> $(@) && " +
             "echo " + to_append + " >> $(@)")
+
+
+def tf_version_info_genrule():
+  native.genrule(
+      name = "version_info_gen",
+      srcs = [
+          "//tensorflow/tools/git:gen/spec.json",
+          "//tensorflow/tools/git:gen/head",
+          "//tensorflow/tools/git:gen/branch_ref",
+      ],
+      outs = ["util/version_info.cc"],
+      cmd = "$(location //tensorflow/tools/git:gen_git_source.py) --generate $(SRCS) \"$@\"",
+      local = 1,
+      tools = ["//tensorflow/tools/git:gen_git_source.py"],
+  )

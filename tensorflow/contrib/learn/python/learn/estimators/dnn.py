@@ -19,9 +19,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-from tensorflow.contrib.learn.python.learn.estimators import _sklearn
 from tensorflow.contrib.learn.python.learn.estimators import dnn_linear_combined
-from tensorflow.contrib.learn.python.learn.estimators.base import DeprecatedMixin
 from tensorflow.python.ops import nn
 
 
@@ -79,8 +77,6 @@ class DNNClassifier(dnn_linear_combined.DNNLinearCombinedClassifier):
       Both features' `value` must be a `SparseTensor`.
     - if `column` is a `RealValuedColumn`, a feature with `key=column.name`
       whose `value` is a `Tensor`.
-    - if `feature_columns` is `None`, then `input` must contain only real
-      valued `Tensor`.
   """
 
   def __init__(self,
@@ -211,8 +207,6 @@ class DNNRegressor(dnn_linear_combined.DNNLinearCombinedRegressor):
       Both features' `value` must be a `SparseTensor`.
     - if `column` is a `RealValuedColumn`, a feature with `key=column.name`
       whose `value` is a `Tensor`.
-    - if `feature_columns` is `None`, then `input` must contain only real
-      valued `Tensor`.
   """
 
   def __init__(self,
@@ -283,14 +277,3 @@ class DNNRegressor(dnn_linear_combined.DNNLinearCombinedRegressor):
   @property
   def bias_(self):
     return self.dnn_bias_
-
-
-# TensorFlowDNNClassifier and TensorFlowDNNRegressor are deprecated.
-class TensorFlowDNNClassifier(DeprecatedMixin, DNNClassifier,
-                              _sklearn.ClassifierMixin):
-  pass
-
-
-class TensorFlowDNNRegressor(DeprecatedMixin, DNNRegressor,
-                             _sklearn.RegressorMixin):
-  pass
