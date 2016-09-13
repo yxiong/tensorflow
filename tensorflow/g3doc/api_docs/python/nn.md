@@ -672,6 +672,44 @@ Our Conv3D implements a form of cross-correlation.
   A `Tensor`. Has the same type as `input`.
 
 
+- - -
+
+### `tf.nn.conv3d_transpose(value, filter, output_shape, strides, padding='SAME', name=None)` {#conv3d_transpose}
+
+The transpose of `conv3d`.
+
+This operation is sometimes called "deconvolution" after [Deconvolutional
+Networks](http://www.matthewzeiler.com/pubs/cvpr2010/cvpr2010.pdf), but is
+actually the transpose (gradient) of `conv3d` rather than an actual
+deconvolution.
+
+##### Args:
+
+
+*  <b>`value`</b>: A 5-D `Tensor` of type `float` and shape
+    `[batch, depth, height, width, in_channels]`.
+*  <b>`filter`</b>: A 5-D `Tensor` with the same type as `value` and shape
+    `[depth, height, width, output_channels, in_channels]`.  `filter`'s
+    `in_channels` dimension must match that of `value`.
+*  <b>`output_shape`</b>: A 1-D `Tensor` representing the output shape of the
+    deconvolution op.
+*  <b>`strides`</b>: A list of ints. The stride of the sliding window for each
+    dimension of the input tensor.
+*  <b>`padding`</b>: A string, either `'VALID'` or `'SAME'`. The padding algorithm.
+    See the [comment here](https://www.tensorflow.org/api_docs/python/nn.html#convolution)
+*  <b>`name`</b>: Optional name for the returned tensor.
+
+##### Returns:
+
+  A `Tensor` with the same type as `value`.
+
+##### Raises:
+
+
+*  <b>`ValueError`</b>: If input/output depth does not match `filter`'s shape, or if
+    padding is other than `'VALID'` or `'SAME'`.
+
+
 
 ## Pooling
 
@@ -1471,7 +1509,7 @@ For each batch `i` and class `j` we have
 
 - - -
 
-### `tf.nn.softmax_cross_entropy_with_logits(logits, labels, name=None)` {#softmax_cross_entropy_with_logits}
+### `tf.nn.softmax_cross_entropy_with_logits(logits, labels, dim=-1, name=None)` {#softmax_cross_entropy_with_logits}
 
 Computes softmax cross entropy between `logits` and `labels`.
 
@@ -1500,6 +1538,7 @@ and the same dtype (either `float16`, `float32`, or `float64`).
 
 *  <b>`logits`</b>: Unscaled log probabilities.
 *  <b>`labels`</b>: Each row `labels[i]` must be a valid probability distribution.
+*  <b>`dim`</b>: The class dimension. Defaulted to -1 which is the last dimension.
 *  <b>`name`</b>: A name for the operation (optional).
 
 ##### Returns:
@@ -1795,7 +1834,7 @@ for correctness than performance, unlike in rnn().
 *  <b>`sequence_length`</b>: (optional) An int32/int64 vector sized `[batch_size]`.
 *  <b>`initial_state`</b>: (optional) An initial state for the RNN.
     If `cell.state_size` is an integer, this must be
-    a `Tensor` of appropriate type and shape `[batch_size x cell.state_size]`.
+    a `Tensor` of appropriate type and shape `[batch_size, cell.state_size]`.
     If `cell.state_size` is a tuple, this should be a tuple of
     tensors having shapes `[batch_size, s] for s in cell.state_size`.
 *  <b>`dtype`</b>: (optional) The data type for the initial state and expected output.
@@ -1979,7 +2018,7 @@ given.
     containing the actual lengths for each of the sequences.
 *  <b>`initial_state_fw`</b>: (optional) An initial state for the forward RNN.
     This must be a tensor of appropriate type and shape
-    `[batch_size x cell_fw.state_size]`.
+    `[batch_size, cell_fw.state_size]`.
     If `cell_fw.state_size` is a tuple, this should be a tuple of
     tensors having shapes `[batch_size, s] for s in cell_fw.state_size`.
 *  <b>`initial_state_bw`</b>: (optional) Same as for `initial_state_fw`, but using
@@ -2063,7 +2102,7 @@ length(s) of the sequence(s) or completely unrolled if length(s) is not given.
     [batch_size, input_size], or a nested tuple of such elements.
 *  <b>`initial_state_fw`</b>: (optional) An initial state for the forward RNN.
     This must be a tensor of appropriate type and shape
-    `[batch_size x cell_fw.state_size]`.
+    `[batch_size, cell_fw.state_size]`.
     If `cell_fw.state_size` is a tuple, this should be a tuple of
     tensors having shapes `[batch_size, s] for s in cell_fw.state_size`.
 *  <b>`initial_state_bw`</b>: (optional) Same as for `initial_state_fw`, but using

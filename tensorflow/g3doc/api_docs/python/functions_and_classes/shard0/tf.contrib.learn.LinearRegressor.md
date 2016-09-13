@@ -42,7 +42,7 @@ Input of `fit` and `evaluate` should have following features,
       key=column.name, value=a `Tensor`
 - - -
 
-#### `tf.contrib.learn.LinearRegressor.__init__(feature_columns, model_dir=None, weight_column_name=None, optimizer=None, gradient_clip_norm=None, enable_centered_bias=True, target_dimension=1, config=None)` {#LinearRegressor.__init__}
+#### `tf.contrib.learn.LinearRegressor.__init__(feature_columns, model_dir=None, weight_column_name=None, optimizer=None, gradient_clip_norm=None, enable_centered_bias=None, target_dimension=1, config=None)` {#LinearRegressor.__init__}
 
 Construct a `LinearRegressor` estimator object.
 
@@ -72,6 +72,13 @@ Construct a `LinearRegressor` estimator object.
 ##### Returns:
 
   A `LinearRegressor` estimator.
+
+
+- - -
+
+#### `tf.contrib.learn.LinearRegressor.__repr__()` {#LinearRegressor.__repr__}
+
+
 
 
 - - -

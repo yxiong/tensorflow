@@ -39,6 +39,13 @@ Initializes a BaseEstimator instance.
 
 - - -
 
+#### `tf.contrib.learn.BaseEstimator.__repr__()` {#BaseEstimator.__repr__}
+
+
+
+
+- - -
+
 #### `tf.contrib.learn.BaseEstimator.config` {#BaseEstimator.config}
 
 
@@ -269,7 +276,7 @@ component of a nested object.
 Estimator class is the basic TensorFlow model trainer/evaluator.
 - - -
 
-#### `tf.contrib.learn.Estimator.__init__(model_fn=None, model_dir=None, config=None, params=None)` {#Estimator.__init__}
+#### `tf.contrib.learn.Estimator.__init__(model_fn=None, model_dir=None, config=None, params=None, feature_engineering_fn=None)` {#Estimator.__init__}
 
 Constructs an Estimator instance.
 
@@ -306,11 +313,23 @@ Constructs an Estimator instance.
 *  <b>`config`</b>: Configuration object.
 *  <b>`params`</b>: `dict` of hyper parameters that will be passed into `model_fn`.
           Keys are names of parameters, values are basic python types.
+*  <b>`feature_engineering_fn`</b>: Feature engineering function. Takes features and
+                          targets which are the output of `input_fn` and
+                          returns features and targets which will be fed
+                          into `model_fn`. Please check `model_fn` for
+                          a definition of features and targets.
 
 ##### Raises:
 
 
 *  <b>`ValueError`</b>: parameters of `model_fn` don't match `params`.
+
+
+- - -
+
+#### `tf.contrib.learn.Estimator.__repr__()` {#Estimator.__repr__}
+
+
 
 
 - - -
@@ -609,7 +628,7 @@ Input of `fit` and `evaluate` should have following features,
     whose `value` is a `Tensor`.
 - - -
 
-#### `tf.contrib.learn.DNNClassifier.__init__(hidden_units, feature_columns, model_dir=None, n_classes=2, weight_column_name=None, optimizer=None, activation_fn=relu, dropout=None, gradient_clip_norm=None, enable_centered_bias=True, config=None)` {#DNNClassifier.__init__}
+#### `tf.contrib.learn.DNNClassifier.__init__(hidden_units, feature_columns, model_dir=None, n_classes=2, weight_column_name=None, optimizer=None, activation_fn=relu, dropout=None, gradient_clip_norm=None, enable_centered_bias=None, config=None)` {#DNNClassifier.__init__}
 
 Initializes a DNNClassifier instance.
 
@@ -647,6 +666,13 @@ Initializes a DNNClassifier instance.
 ##### Returns:
 
   A `DNNClassifier` estimator.
+
+
+- - -
+
+#### `tf.contrib.learn.DNNClassifier.__repr__()` {#DNNClassifier.__repr__}
+
+
 
 
 - - -
@@ -991,7 +1017,7 @@ Input of `fit` and `evaluate` should have following features,
     whose `value` is a `Tensor`.
 - - -
 
-#### `tf.contrib.learn.DNNRegressor.__init__(hidden_units, feature_columns, model_dir=None, weight_column_name=None, optimizer=None, activation_fn=relu, dropout=None, gradient_clip_norm=None, enable_centered_bias=True, config=None)` {#DNNRegressor.__init__}
+#### `tf.contrib.learn.DNNRegressor.__init__(hidden_units, feature_columns, model_dir=None, weight_column_name=None, optimizer=None, activation_fn=relu, dropout=None, gradient_clip_norm=None, enable_centered_bias=None, config=None)` {#DNNRegressor.__init__}
 
 Initializes a `DNNRegressor` instance.
 
@@ -1027,6 +1053,13 @@ Initializes a `DNNRegressor` instance.
 ##### Returns:
 
   A `DNNRegressor` estimator.
+
+
+- - -
+
+#### `tf.contrib.learn.DNNRegressor.__repr__()` {#DNNRegressor.__repr__}
+
+
 
 
 - - -
@@ -1344,6 +1377,13 @@ Initializes a TensorFlowEstimator instance.
     * 0: the algorithm and debug information is muted.
     * 1: trainer prints the progress.
     * 2: log device placement is printed.
+
+
+- - -
+
+#### `tf.contrib.learn.TensorFlowEstimator.__repr__()` {#TensorFlowEstimator.__repr__}
+
+
 
 
 - - -
@@ -1718,7 +1758,7 @@ Input of `fit` and `evaluate` should have following features,
     whose `value` is a `Tensor`.
 - - -
 
-#### `tf.contrib.learn.LinearClassifier.__init__(feature_columns, model_dir=None, n_classes=2, weight_column_name=None, optimizer=None, gradient_clip_norm=None, enable_centered_bias=True, config=None)` {#LinearClassifier.__init__}
+#### `tf.contrib.learn.LinearClassifier.__init__(feature_columns, model_dir=None, n_classes=2, weight_column_name=None, optimizer=None, gradient_clip_norm=None, enable_centered_bias=None, config=None)` {#LinearClassifier.__init__}
 
 Construct a `LinearClassifier` estimator object.
 
@@ -1875,7 +1915,7 @@ Input of `fit` and `evaluate` should have following features,
       key=column.name, value=a `Tensor`
 - - -
 
-#### `tf.contrib.learn.LinearRegressor.__init__(feature_columns, model_dir=None, weight_column_name=None, optimizer=None, gradient_clip_norm=None, enable_centered_bias=True, target_dimension=1, config=None)` {#LinearRegressor.__init__}
+#### `tf.contrib.learn.LinearRegressor.__init__(feature_columns, model_dir=None, weight_column_name=None, optimizer=None, gradient_clip_norm=None, enable_centered_bias=None, target_dimension=1, config=None)` {#LinearRegressor.__init__}
 
 Construct a `LinearRegressor` estimator object.
 
@@ -1905,6 +1945,13 @@ Construct a `LinearRegressor` estimator object.
 ##### Returns:
 
   A `LinearRegressor` estimator.
+
+
+- - -
+
+#### `tf.contrib.learn.LinearRegressor.__repr__()` {#LinearRegressor.__repr__}
+
+
 
 
 - - -
@@ -2229,6 +2276,13 @@ Initializes a TensorFlowRNNClassifier instance.
     model will be continuely trained on every call of fit.
 *  <b>`config`</b>: RunConfig object that controls the configurations of the session,
     e.g. num_cores, gpu_memory_fraction, etc.
+
+
+- - -
+
+#### `tf.contrib.learn.TensorFlowRNNClassifier.__repr__()` {#TensorFlowRNNClassifier.__repr__}
+
+
 
 
 - - -
@@ -2612,6 +2666,13 @@ Initializes a TensorFlowRNNRegressor instance.
 
 - - -
 
+#### `tf.contrib.learn.TensorFlowRNNRegressor.__repr__()` {#TensorFlowRNNRegressor.__repr__}
+
+
+
+
+- - -
+
 #### `tf.contrib.learn.TensorFlowRNNRegressor.bias_` {#TensorFlowRNNRegressor.bias_}
 
 Returns bias of the rnn layer.
@@ -2939,6 +3000,13 @@ Perform various training, evaluation, and inference actions on a graph.
 - - -
 
 ### `class tf.contrib.learn.NanLossDuringTrainingError` {#NanLossDuringTrainingError}
+
+
+- - -
+
+#### `tf.contrib.learn.NanLossDuringTrainingError.__str__()` {#NanLossDuringTrainingError.__str__}
+
+
 
 
 
@@ -3367,7 +3435,7 @@ Use `parse_fn` if you need to do parsing / processing on single examples.
 
 - - -
 
-### `tf.contrib.learn.read_batch_features(file_pattern, batch_size, features, reader, randomize_input=True, num_epochs=None, queue_capacity=10000, feature_queue_capacity=100, reader_num_threads=1, parser_num_threads=1, name=None)` {#read_batch_features}
+### `tf.contrib.learn.read_batch_features(file_pattern, batch_size, features, reader, randomize_input=True, num_epochs=None, queue_capacity=10000, feature_queue_capacity=100, reader_num_threads=1, parser_num_threads=1, parse_fn=None, name=None)` {#read_batch_features}
 
 Adds operations to read, queue, batch and parse `Example` protos.
 
@@ -3402,6 +3470,8 @@ All ops are added to the default graph.
 *  <b>`reader_num_threads`</b>: The number of threads to read examples.
 *  <b>`parser_num_threads`</b>: The number of threads to parse examples.
     records to read at once
+*  <b>`parse_fn`</b>: Parsing function, takes `Example` Tensor returns parsed
+    representation. If `None`, no parsing is done.
 *  <b>`name`</b>: Name of resulting op.
 
 ##### Returns:

@@ -212,12 +212,22 @@ cuda_py_tests(
         "pooling_ops_test.py",
         "random_gamma_test.py",
         "rnn_test.py",
-        "scatter_ops_test.py",
         "seq2seq_test.py",
         "slice_op_test.py",
         "sparse_matmul_op_test.py",
         "sparse_ops_test.py",
         "sparse_tensor_dense_matmul_op_test.py",
+    ],
+    additional_deps = [
+        "//tensorflow:tensorflow_py",
+    ],
+)
+
+cuda_py_tests(
+    name = "large_kernel_tests",
+    size = "large",
+    srcs = [
+        "scatter_ops_test.py",
     ],
     additional_deps = [
         "//tensorflow:tensorflow_py",
@@ -250,18 +260,27 @@ cuda_py_tests(
     name = "kernel_tests_with_sharding",
     size = "medium",
     srcs = [
-        "batch_matrix_band_part_op_test.py",
         "conv_ops_3d_test.py",
-        "cwise_ops_test.py",
         "embedding_ops_test.py",
         "linalg_grad_test.py",
+        "matrix_band_part_op_test.py",
         "svd_op_test.py",
     ],
     additional_deps = [
         "//tensorflow:tensorflow_py",
     ],
+    shard_count = 20,
+)
+
+cuda_py_test(
+    name = "cwise_ops_test",
+    size = "medium",
+    srcs = ["cwise_ops_test.py"],
+    additional_deps = [
+        "//tensorflow:tensorflow_py",
+    ],
     shard_count = 50,
-    tags = ["notap"],  # b/30226163
+    tags = ["notap"],  # http://b/30226163
 )
 
 filegroup(

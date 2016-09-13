@@ -11,6 +11,18 @@ package(default_visibility = ["//tensorflow:__subpackages__"])
 load("//tensorflow:tensorflow.bzl", "cuda_py_tests")
 
 cuda_py_tests(
+    name = "distribution_test",
+    size = "small",
+    srcs = ["python/kernel_tests/distribution_test.py"],
+    additional_deps = [
+        ":distributions_py",
+        "//tensorflow:tensorflow_py",
+        "//tensorflow/python:framework_test_lib",
+        "//tensorflow/python:platform_test",
+    ],
+)
+
+cuda_py_tests(
     name = "operator_pd_test",
     size = "small",
     srcs = ["python/kernel_tests/operator_pd_test.py"],
@@ -80,6 +92,7 @@ cuda_py_tests(
         "//tensorflow/python:framework_test_lib",
         "//tensorflow/python:platform_test",
     ],
+    shard_count = 5,
     tags = ["notap"],  # http://b/30441813
 )
 
@@ -328,8 +341,19 @@ cuda_py_tests(
 )
 
 cuda_py_tests(
+    name = "quantized_distribution_test",
+    size = "medium",
+    srcs = ["python/kernel_tests/quantized_distribution_test.py"],
+    additional_deps = [
+        ":distributions_py",
+        "//tensorflow:tensorflow_py",
+        "//tensorflow/python:platform_test",
+    ],
+)
+
+cuda_py_tests(
     name = "transformed_distribution_test",
-    size = "small",
+    size = "medium",
     srcs = ["python/kernel_tests/transformed_distribution_test.py"],
     additional_deps = [
         ":distributions_py",
